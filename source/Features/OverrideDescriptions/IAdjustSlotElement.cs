@@ -2,7 +2,7 @@
 
 namespace MechEngineer.Features.OverrideDescriptions
 {
-    internal interface IAdjustSlotElement
+    public interface IAdjustSlotElement
     {
         void AdjustSlotElement(MechLabItemSlotElement element, MechLabPanel panel);
     }

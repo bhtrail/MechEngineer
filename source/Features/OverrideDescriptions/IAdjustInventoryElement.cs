@@ -2,7 +2,7 @@
 
 namespace MechEngineer.Features.OverrideDescriptions
 {
-    internal interface IAdjustInventoryElement
+    public interface IAdjustInventoryElement
     {
         void AdjustInventoryElement(ListElementController_BASE_NotListView element);
     }

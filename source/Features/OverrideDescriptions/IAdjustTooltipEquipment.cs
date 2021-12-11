@@ -3,7 +3,7 @@ using BattleTech.UI.Tooltips;
 
 namespace MechEngineer.Features.OverrideDescriptions
 {
-    internal interface IAdjustTooltipEquipment
+    public interface IAdjustTooltipEquipment
     {
         void AdjustTooltipEquipment(TooltipPrefab_Equipment tooltip, MechComponentDef componentDef);
     }
