@@ -33,9 +33,20 @@ namespace MechEngineer.Features.MechLabSlots
             Setup(MechLabSlotsFeature.settings.TopRightWidget);
         }
 
-        public static void SetLoadout(LocalizableText centerTorsoLabel, MechDef mechDef, DataManager dataManager, List<GameObject> allComponents)
+        public static void SetLoadout(LocalizableText headerLabel, ChassisLocations location, MechDef mechDef, DataManager dataManager, List<GameObject> allComponents)
         {
-            var centerTorso = centerTorsoLabel.transform.parent.gameObject;
+            if (location == ChassisLocations.CenterTorso)
+            {
+                SetupWidgetSections(headerLabel, mechDef, dataManager, allComponents);
+            }
+
+            var text = ChassisLocationNamingUtils.GetLocationShortLabel(mechDef.Chassis, location);
+            headerLabel.SetText(text);
+        }
+
+        private static void SetupWidgetSections(LocalizableText ctLabel, MechDef mechDef, DataManager dataManager, List<GameObject> allComponents)
+        {
+            var centerTorso = ctLabel.transform.parent.gameObject;
 
             var topLeft = new List<MechComponentRef>();
             var topRight = new List<MechComponentRef>();

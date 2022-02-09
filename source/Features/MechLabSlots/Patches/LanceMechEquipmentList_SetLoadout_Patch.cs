@@ -9,11 +9,16 @@ using UnityEngine;
 
 namespace MechEngineer.Features.MechLabSlots.Patches
 {
-    [HarmonyPatch(typeof(LanceMechEquipmentList), nameof(LanceMechEquipmentList.SetLoadout), new Type[0])]
+    [HarmonyPatch(
+        typeof(LanceMechEquipmentList),
+        nameof(LanceMechEquipmentList.SetLoadout),
+        typeof(LocalizableText), typeof(UIColorRefTracker), typeof(Transform), typeof(ChassisLocations)
+    )]
     public static class LanceMechEquipmentList_SetLoadout_Patch
     {
         public static void Postfix(
-            LocalizableText ___centerTorsoLabel,
+            LocalizableText headerLabel,
+            ChassisLocations location,
             MechDef ___activeMech,
             DataManager ___dataManager,
             List<GameObject> ___allComponents
@@ -22,7 +27,8 @@ namespace MechEngineer.Features.MechLabSlots.Patches
             try
             {
                 CustomWidgetsFixLanceMechEquipment.SetLoadout(
-                    ___centerTorsoLabel,
+                    headerLabel,
+                    location,
                     ___activeMech,
                     ___dataManager,
                     ___allComponents
