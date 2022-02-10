@@ -24,23 +24,5 @@ namespace MechEngineer.Features.MechLabSlots
 
             return Mech.GetLongChassisLocation(location);
         }
-
-        internal static Text GetLocationShortLabel(ChassisDef chassisDef, ChassisLocations location)
-        {
-            if (chassisDef.Is<ChassisLocationNaming>(out var naming))
-            {
-                var text = naming.Names
-                    .Where(x => x.Location == location)
-                    .Select(x => x.ShortLabel)
-                    .FirstOrDefault();
-
-                if (text != null)
-                {
-                    return new Text(text);
-                }
-            }
-
-            return Mech.GetAbbreviatedChassisLocation(location);
-        }
     }
 }
