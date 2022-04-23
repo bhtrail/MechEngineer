@@ -5,15 +5,24 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Download Build Dependencies
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@master
+      with:
+        dotnet-version: '6.0'
+        include-prerelease: true
+    - name: Download Dependencies
       shell: bash
       env:
         MANAGED_ARCHIVE_PW: ${{ secrets.MANAGED_ARCHIVE_PW }}
         MANAGED_ARCHIVE_URL: ${{ secrets.MANAGED_ARCHIVE_URL }}
       run: |
         set -e
+        # BattleTech Managed
         curl -L -o "$GITHUB_WORKSPACE/Managed.7z" "$MANAGED_ARCHIVE_URL"
         7z e -p"$MANAGED_ARCHIVE_PW" -o"$GITHUB_WORKSPACE/deps" "$GITHUB_WORKSPACE/Managed.7z"
+        # CustomComponents
+        curl -L -o CustomComponents.zip https://github.com/BattletechModders/CustomComponents/releases/download/latest/CustomComponents.zip
+        unzip CustomComponents.zip
     - name: Checkout MechEngineer
       uses: actions/checkout@master
       with:
@@ -23,22 +32,6 @@ jobs:
       run: |
         cd MechEngineer/
         git fetch --prune --unshallow
-    - name: Checkout CustomComponents
-      uses: actions/checkout@master
-      with:
-        repository: BattletechModders/CustomComponents
-        ref: UnitTypes
-        path: CustomComponents/
-    - name: Fetch CustomComponents Branches and Tags
-      shell: bash
-      run: |
-        cd CustomComponents/
-        git fetch --prune --unshallow
-    - name: Setup dotnet
-      uses: actions/setup-dotnet@master
-      with:
-        dotnet-version: '6.0.x'
-        include-prerelease: true
     - name: Build Release
       shell: bash
       env:
@@ -47,61 +40,23 @@ jobs:
         set -e
         cd "$GITHUB_WORKSPACE/MechEngineer/"
         ./release.sh "-p:ReferencePath=$GITHUB_WORKSPACE/deps"
-    - name: Upload Build
-      uses: actions/upload-artifact@master
+    - name: Release Latest
+      uses: "marvinpinto/action-automatic-releases@latest"
+      if: github.ref == 'refs/heads/master'
       with:
-        name: dist
-        path: "./MechEngineer/dist/MechEngineer.zip"
-
-  latest:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Download Build
-        uses: actions/download-artifact@master
-        with:
-          name:  dist
-          path: .
-      - name: Latest (unstable)
-        uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          title: "Latest (unstable)"
-          prerelease: true
-          files: MechEngineer.zip
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: contains(github.ref, 'refs/tags')
-    steps:
-    - name: Download Build
-      uses: actions/download-artifact@master
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        title: "Latest (unstable)"
+        prerelease: true
+        files: |
+          ./MechEngineer/dist/MechEngineer.zip
+    - name: Release stable
+      uses: "softprops/action-gh-release@master"
+      if: startsWith(github.ref, 'refs/tags')
       with:
-        name:  dist
-        path: .
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
         draft: false
         prerelease: false
         body: |
-          Works with ModLoader and ModTek
+          Works with best with ModTek v2
           - MechEngineer.zip contains only the bare bones mod + CustomComponents
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: MechEngineer.zip
-        asset_name: MechEngineer.zip
-        asset_content_type: application/zip
+        files: "./MechEngineer/dist/MechEngineer.zip"
