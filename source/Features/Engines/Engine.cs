@@ -53,7 +53,7 @@ public class Engine
         }
     }
 
-    private static int MatchingCount(IEnumerable<MechComponentRef> heatSinks, HeatSinkDef heatSinkDef)
+    public static int MatchingCount(IEnumerable<MechComponentRef> heatSinks, HeatSinkDef heatSinkDef)
     {
         return heatSinks.Select(r => r.Def).Count(d => d == heatSinkDef);
     }
@@ -83,7 +83,7 @@ public class Engine
 
     // Declared public to have access from BattleValue module -- bhtrail
     public EngineCoreDef CoreDef { get; set; }
-    internal WeightFactors WeightFactors { get; set; }
+    public WeightFactors WeightFactors { get; set; }
     // Declared public to have access from BattleValue module -- bhtrail
     public EngineHeatBlockDef HeatBlockDef { get; set; } // amount of internal heat sinks
     // Declared public to have access from BattleValue module -- bhtrail
