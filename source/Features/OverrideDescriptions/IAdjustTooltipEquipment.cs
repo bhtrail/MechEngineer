@@ -1,10 +1,9 @@
 ﻿using BattleTech;
 using BattleTech.UI.Tooltips;
 
-namespace MechEngineer.Features.OverrideDescriptions
+namespace MechEngineer.Features.OverrideDescriptions;
+
+public interface IAdjustTooltipEquipment
 {
-    public interface IAdjustTooltipEquipment
-    {
-        void AdjustTooltipEquipment(TooltipPrefab_Equipment tooltip, MechComponentDef componentDef);
-    }
+    void AdjustTooltipEquipment(TooltipPrefab_Equipment tooltip, MechComponentDef componentDef);
 }

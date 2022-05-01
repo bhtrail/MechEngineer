@@ -1,4 +1,5 @@
 ﻿using MechEngineer.Features.AccuracyEffects;
+using MechEngineer.Features.ArmorMaximizer;
 using MechEngineer.Features.ArmorStructureChanges;
 using MechEngineer.Features.ArmorStructureRatio;
 using MechEngineer.Features.AutoFix;
@@ -30,44 +31,44 @@ using MechEngineer.Features.TagManager;
 using MechEngineer.Features.TurretLimitedAmmo;
 using MechEngineer.Features.TurretMechComponents;
 
-namespace MechEngineer.Features
+namespace MechEngineer.Features;
+
+internal static class FeaturesList
 {
-    internal static class FeaturesList
+    // order matters, dependencies between "Features" are encoded into the order
+    internal static readonly IFeature[] Features =
     {
-        // order matters, dependencies between "Features" are encoded into the order
-        internal static IFeature[] Features =
-        {
-            BetterLogFeature.Shared,
-            OrderedStatusEffectsFeature.Shared,
-            OverrideTonnageFeature.Shared,
-            HeatSinkCapacityStatFeature.Shared,
-            EngineFeature.Shared,
-            MoveMultiplierStatFeature.Shared,
-            CompressFloatieMessagesFeature.Shared,
-            DamageIgnoreFeature.Shared,
-            PlaceholderEffectsFeature.Shared,
-            CriticalEffectsFeature.Shared,
-            AccuracyEffectsFeature.Shared,
-            OverrideDescriptionsFeature.Shared,
-            DynamicSlotsFeature.Shared,
-            ShutdownInjuryProtectionFeature.Shared,
-            MechLabSlotsFeature.Shared,
-            InvalidInventoryFeature.Shared,
-            ComponentExplosionsFeature.Shared,
-            ArmorStructureRatioFeature.Shared,
-            ArmorStructureChangesFeature.Shared,
-            HardpointFixFeature.Shared,
-            AutoFixerFeature.Shared,
-            GlobalsFeature.Shared,
-            TurretMechComponentsFeature.Shared,
-            TurretLimitedAmmoFeature.Shared,
-            OverrideGhostVFXFeature.Shared,
-            TagManagerFeature.Shared,
-            OverrideStatTooltipsFeature.Shared,
-            PerformanceFeature.Shared,
-            DebugSaveMechToFileFeature.Shared,
-            DebugCycleCombatSoundsFeature.Shared,
-            DebugScreenshotMechsFeature.Shared
-        };
-    }
+        BetterLogFeature.Shared,
+        OrderedStatusEffectsFeature.Shared,
+        OverrideTonnageFeature.Shared,
+        HeatSinkCapacityStatFeature.Shared,
+        EngineFeature.Shared,
+        MoveMultiplierStatFeature.Shared,
+        CompressFloatieMessagesFeature.Shared,
+        DamageIgnoreFeature.Shared,
+        PlaceholderEffectsFeature.Shared,
+        CriticalEffectsFeature.Shared,
+        AccuracyEffectsFeature.Shared,
+        OverrideDescriptionsFeature.Shared,
+        DynamicSlotsFeature.Shared,
+        ShutdownInjuryProtectionFeature.Shared,
+        MechLabSlotsFeature.Shared,
+        InvalidInventoryFeature.Shared,
+        ComponentExplosionsFeature.Shared,
+        ArmorStructureRatioFeature.Shared,
+        ArmorStructureChangesFeature.Shared,
+        ArmorMaximizerFeature.Shared,
+        HardpointFixFeature.Shared,
+        AutoFixerFeature.Shared,
+        GlobalsFeature.Shared,
+        TurretMechComponentsFeature.Shared,
+        TurretLimitedAmmoFeature.Shared,
+        OverrideGhostVFXFeature.Shared,
+        TagManagerFeature.Shared,
+        OverrideStatTooltipsFeature.Shared,
+        PerformanceFeature.Shared,
+        DebugSaveMechToFileFeature.Shared,
+        DebugCycleCombatSoundsFeature.Shared,
+        DebugScreenshotMechsFeature.Shared
+    };
 }

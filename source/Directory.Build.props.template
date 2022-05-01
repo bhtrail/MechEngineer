@@ -1,6 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-  	<ReferencePath>C:\Games\Steam\SteamApps\common\BATTLETECH\BattleTech_Data\Managed\publicized_assemblies</ReferencePath>
-  </PropertyGroup>
+	<PropertyGroup>
+		<BattleTechGameDir>C:\Games\Steam\SteamApps\common\BATTLETECH</BattleTechGameDir>
+
+        <!--
+            If your MechEngineer checkout is outside of the BATTLETECH Mods directory
+            you need to uncomment and adjust the following settings.
+        -->
+        <!-- where should the MechEngineer DLL be copied to? -->
+  	    <!-- <MechEngineerModPath>$(BattleTechGameDir)\Mods\MechEngineer</MechEngineerModPath> -->
+        <!-- where can the CustomComponents DLL be found? -->
+  	    <!-- <CustomComponentsModPath>$(BattleTechGameDir)\Mods\CustomComponents</CustomComponentsModPath> -->
+	</PropertyGroup>
 </Project>

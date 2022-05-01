@@ -1,46 +1,84 @@
-﻿using BattleTech;
-using BattleTech.UI;
-using BattleTech.UI.Tooltips;
-using CustomComponents;
-using MechEngineer.Features.OverrideDescriptions;
+﻿#nullable enable
+using System.Linq;
+using BattleTech;
+using MechEngineer.Features.Engines;
+using MechEngineer.Features.Engines.Helper;
 
-namespace MechEngineer.Features.OverrideTonnage
+namespace MechEngineer.Features.OverrideTonnage;
+
+internal class Weights
 {
-    [CustomComponent("Weights")]
-    public class Weights : SimpleCustomComponent, IAdjustSlotElement, IAdjustTooltipEquipment, IAdjustTooltipWeapon
+    internal static float CalculateFreeTonnage(MechDef mechDef)
     {
-        public int ReservedSlots { get; set; } = 0; // TODO move to own feature... SlotsHandler or SizeHandler
-        public float ArmorFactor { get; set; } = 1;
-        public float StructureFactor { get; set; } = 1;
-        public float EngineFactor { get; set; } = 1;
-        //public float EngineFactorFactor { get; set; } = 1;
-        public float GyroFactor { get; set; } = 1;
-        public float ChassisFactor { get; set; } = 1;
+        var weights = new Weights(mechDef);
+        Control.Logger.Debug?.Log($"Chassis={mechDef.Chassis.Description.Id} weights={weights}");
+        return weights.FreeWeight;
+    }
 
-        public void Combine(Weights savings)
-        {
-            ReservedSlots += savings.ReservedSlots;
-            ArmorFactor += savings.ArmorFactor - 1;
-            StructureFactor += savings.StructureFactor - 1;
-            EngineFactor += savings.EngineFactor - 1;
-            //EngineFactorFactor += savings.EngineFactorFactor - 1;
-            GyroFactor += savings.GyroFactor - 1;
-            ChassisFactor += savings.ChassisFactor - 1;
-        }
+    internal static float CalculateTotalTonnage(MechDef mechDef)
+    {
+        var weights = new Weights(mechDef);
+        return weights.TotalWeight;
+    }
 
-        public void AdjustSlotElement(MechLabItemSlotElement element, MechLabPanel panel)
-        {
-            WeightsHandler.Shared.AdjustSlotElement(element, panel);
-        }
+    internal static float CalculateWeightFactorsChange(MechDef mechDef, WeightFactors changedFactors)
+    {
+        var weights = new Weights(mechDef);
+        var before = weights.TotalWeight;
+        weights.SetFactors(changedFactors);
+        var after = weights.TotalWeight;
+        return after - before;
+    }
 
-        public void AdjustTooltipEquipment(TooltipPrefab_Equipment tooltip, MechComponentDef componentDef)
-        {
-            WeightsHandler.Shared.AdjustTooltipEquipment(tooltip, componentDef);
-        }
+    internal float StandardArmorWeight;
+    internal float StandardStructureWeight;
+    internal float StandardChassisWeightCapacity;
+    internal float ComponentSumWeight;
+    internal Engine? Engine;
 
-        public void AdjustTooltipWeapon(TooltipPrefab_Weapon tooltip, MechComponentDef componentDef)
+    internal WeightFactors Factors;
+    internal void SetFactors(WeightFactors value)
+    {
+        Factors = value;
+        if (Engine != null)
         {
-            WeightsHandler.Shared.AdjustTooltipWeapon(tooltip, componentDef);
+            Engine.WeightFactors = value;
         }
+    }
+
+    internal Weights(MechDef mechDef)
+    {
+        StandardArmorWeight = mechDef.StandardArmorTonnage();
+        StandardStructureWeight = mechDef.Chassis.Tonnage / 10f;
+        StandardChassisWeightCapacity = mechDef.Chassis.Tonnage;
+        Engine = mechDef.GetEngine();
+        Factors = Engine?.WeightFactors ?? WeightsUtils.GetWeightFactorsFromInventory(mechDef.Inventory);
+        ComponentSumWeight = mechDef.Inventory.Sum(mechComponentRef => mechComponentRef.Def.Tonnage) - (Engine?.CoreDef.Def.Tonnage ?? 0);
+    }
+
+    internal float TotalWeight => ArmorWeight + StructureWeight + EngineWeight + ComponentSumWeight;
+    internal float FreeWeight => ChassisWeightCapacity - TotalWeight;
+
+    internal float ArmorWeight => CalculateWeight(StandardArmorWeight, Factors.ArmorFactor, ArmorRoundingPrecision);
+    internal float StructureWeight => CalculateWeight(StandardStructureWeight, Factors.StructureFactor);
+    internal float EngineWeight => Engine?.TotalTonnage ?? 0;
+    internal float ChassisWeightCapacity => CalculateWeight(StandardChassisWeightCapacity, Factors.ChassisFactor);
+
+    internal float ArmorRoundingPrecision => PrecisionUtils.RoundUp(StandardArmorRoundingPrecision * Factors.ArmorFactor, 0.0001f);
+
+    internal float StandardArmorRoundingPrecision =
+        OverrideTonnageFeature.settings.ArmorRoundingPrecision
+        ?? UnityGameInstance.BattleTechGame.MechStatisticsConstants.TONNAGE_PER_ARMOR_POINT;
+
+    private static float CalculateWeight(float unmodified, float factor, float? precision = null)
+    {
+        var modified = unmodified * factor;
+        var modifiedRounded = PrecisionUtils.RoundUp(modified, precision ?? OverrideTonnageFeature.settings.TonnageStandardPrecision);
+        return modifiedRounded;
+    }
+
+    public override string ToString()
+    {
+        return $"[capacity={ChassisWeightCapacity} total={TotalWeight} armor={ArmorWeight} structure={StructureWeight} components={ComponentSumWeight} engine={Engine?.EngineTonnage}]";
     }
 }

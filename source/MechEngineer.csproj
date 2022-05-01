@@ -1,23 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup Condition="'$(MechEngineerModPath)' == ''">
+    <MechEngineerModPath>$(SolutionDir)</MechEngineerModPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(CustomComponentsModPath)' == ''">
+    <CustomComponentsModPath>..\..\CustomComponents</CustomComponentsModPath>
+  </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net472</TargetFramework>
-    <LangVersion>preview</LangVersion>
+    <LangVersion>Latest</LangVersion>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <AssemblySearchPaths>
-      $(AssemblySearchPaths);
-      $(ReferencePath);
-    </AssemblySearchPaths>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ReferencePath>
+      $(BattleTechGameDir)\BattleTech_Data\Managed\publicized;
+      $(BattleTechGameDir)\BattleTech_Data\Managed;
+      $(CustomComponentsModPath);
+    </ReferencePath>
+    <AssemblySearchPaths>$(ReferencePath)</AssemblySearchPaths>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
   </PropertyGroup>
   <Target Name="CopyDLLtoModDir" AfterTargets="AfterBuild">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MechEngineerModPath)" />
   </Target>
   <ItemGroup>
     <Reference Include="CustomComponents">
-      <HintPath>..\..\CustomComponents\CustomComponents.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
@@ -39,6 +47,9 @@
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Core">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <Private>False</Private>
     </Reference>
@@ -53,6 +64,9 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">

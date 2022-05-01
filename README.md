@@ -37,6 +37,7 @@ CptMoore ([MechEngineer](https://github.com/BattletechModders/MechEngineer))
 
 * adammartinez271828 - rounding logic
 * Aliencreature - ideas, lore and rules, item variants, testing
+* barak1001 - rules, coding armor maxing, testing
 * bhtail - ideas, testing
 * Colobos - ideas, lore and rules, item and mech balancing, testing
 * CptMoore - ideas, rules, coding, testing, core items
@@ -53,7 +54,8 @@ MechEngineer uses publicized assemblies, those are .NET dlls whose classes and m
 
 0. Install ModTekV2 and CustomComponents if not already done.
 1. Download the [AssemblyPublicizer](https://github.com/CptMoore/AssemblyPublicizer/releases/tag/latest)
-2. Drag'n Drop the BATTLETECH/BattleTech_Data/Managed/ folder onto the exe and it will create a BATTLETECH/BattleTech_Data/Managed/publicized directory.
+2. Run the Publicizier by drag'n dropping the BATTLETECH/BattleTech_Data/Managed/ folder onto the exe
+      and it will create a BATTLETECH/BattleTech_Data/Managed/publicized directory with only `Assembly-CSharp.dll` inside.
 3. Checkout the MechEngineer repository to BATTLETECH/mods/MechEngineer.
 4. Copy the Directory.Build.props.template to Directory.Build.props and replace the ReferencePath directory with the location of the publicized directory.
 5. Open the solution in Visual Studio 2022 and compile the MechEngineer.dll .
