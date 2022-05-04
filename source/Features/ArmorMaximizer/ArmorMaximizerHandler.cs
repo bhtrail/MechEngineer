@@ -1,94 +1,44 @@
-﻿using System;
-using System.Linq;
-using BattleTech;
-using BattleTech.UI;
+﻿using BattleTech.UI;
+using MechEngineer.Features.ArmorMaximizer.Maximizer;
 using MechEngineer.Features.ArmorStructureRatio;
-using MechEngineer.Features.DynamicSlots;
 using MechEngineer.Features.MechLabSlots;
 using UnityEngine;
 using MechEngineer.Features.OverrideTonnage;
-using MechEngineer.Helper;
 
 namespace MechEngineer.Features.ArmorMaximizer;
 
 internal static class ArmorMaximizerHandler
 {
+    internal static void OnStripArmor(MechLabPanel mechLabPanel)
+    {
+        if (!MechArmorState.Strip(mechLabPanel.activeMechDef, out var updates))
+        {
+            return;
+        }
+
+        foreach (var update in updates)
+        {
+            var widget = mechLabPanel.GetLocationWidget(update.Location);
+            widget.SetArmor(update.Location.IsRear(), update.Assigned);
+            Control.Logger.Trace?.Log($"OnStripArmor.SetArmor update={update}");
+        }
+
+        mechLabPanel.FlagAsModified();
+        mechLabPanel.ValidateLoadout(false);
+    }
+
     internal static void OnMaxArmor(MechLabPanel mechLabPanel, MechLabMechInfoWidget infoWidget)
     {
-        var settings = ArmorMaximizerFeature.Shared.Settings;
-        APState state = new(mechLabPanel.activeMechDef);
-        if (MechDefBuilder.Locations.Any(location => mechLabPanel.GetLocationWidget(location).IsDestroyed))
+        if (!MechArmorState.Maximize(mechLabPanel.activeMechDef, ArmorStructureRatioFeature.ArmorPerStep, out var updates))
         {
             return;
         }
 
-        var locationStates = state.Locations.Values.ToArray();
-        var stepSize = ArmorStructureRatioFeature.ArmorPerStep;
-        var changes = false;
-
-        while (state.Remaining >= stepSize)
+        foreach (var update in updates)
         {
-            Array.Sort(locationStates, (x, y) =>
-            {
-                var cmp = -(x.PriorityPrimary - y.PriorityPrimary);
-                if (cmp != 0)
-                {
-                    return cmp;
-                }
-
-                return -(x.PrioritySecondary - y.PrioritySecondary);
-            });
-
-            var locationState = locationStates[0];
-            {
-                var location = locationState.Location;
-                Control.Logger.Trace?.Log($"OnMaxArmor location={location.GetShortString()} state.Remaining={state.Remaining} stepSize={stepSize}");
-
-                // with priority queues, we would just not re-queued any location that is Full
-                if (locationState.IsFull)
-                {
-                    break;
-                }
-
-                locationState.Assigned += stepSize;
-                state.Remaining -= stepSize;
-                changes = true;
-
-                Control.Logger.Trace?.Log($"OnMaxArmor location={location.GetShortString()} locationState={locationState}");
-            }
-        }
-
-        if (!changes)
-        {
-            return;
-        }
-
-        void SetArmor(ChassisLocations location)
-        {
-            var widget = mechLabPanel.GetLocationWidget(location);
-            var locationState = state.Locations[location];
-            if ((location & ChassisLocations.Torso) != ChassisLocations.None)
-            {
-                var front = PrecisionUtils.RoundDownToInt(locationState.Assigned * settings.TorsoFrontBackRatio);
-                if (PrecisionUtils.SmallerThan(5f, locationState.Assigned))
-                {
-                    front = (int)PrecisionUtils.RoundDown(front, ArmorStructureRatioFeature.ArmorPerStep);
-                }
-                var rear = locationState.Assigned - front;
-                widget.SetArmor(false, front);
-                widget.SetArmor(true, rear);
-                Control.Logger.Trace?.Log($"SetArmor Assigned={locationState.Assigned} Max={locationState.Max} front={front} rear={rear}");
-            }
-            else
-            {
-                widget.SetArmor(false, locationState.Assigned);
-                Control.Logger.Trace?.Log($"SetArmor Assigned={locationState.Assigned} Max={locationState.Max}");
-            }
-        }
-
-        foreach (var location in MechDefBuilder.Locations)
-        {
-            SetArmor(location);
+            var widget = mechLabPanel.GetLocationWidget(update.Location);
+            widget.SetArmor(update.Location.IsRear(), update.Assigned);
+            Control.Logger.Trace?.Log($"OnMaxArmor.SetArmor update={update}");
         }
 
         infoWidget.RefreshInfo();
@@ -96,7 +46,7 @@ internal static class ArmorMaximizerHandler
         mechLabPanel.ValidateLoadout(false);
     }
 
-    internal static void HandleArmorUpdate(MechLabLocationWidget widget, bool isRearArmor, float direction)
+    internal static void OnArmorAddOrSubtract(MechLabLocationWidget widget, bool isRearArmor, float direction)
     {
         var precision = AltModifierPressed ? 1 : ArmorStructureRatioFeature.ArmorPerStep;
         var stepSize = ShiftModifierPressed ? 25 : (ControlModifierPressed ? 999 : 1);
@@ -118,25 +68,34 @@ internal static class ArmorMaximizerHandler
             var maxOther = maxTotal - updated;
             var currentOther = isRearArmor ? widget.currentArmor : widget.currentRearArmor;
             var updatedOther = Mathf.Min(currentOther,maxOther);
-            widget.SetArmor(!isRearArmor, updatedOther);
-            Control.Logger.Trace?.Log($"HandleArmorUpdate maxTotal={maxTotal} maxOther={maxOther} currentOther={currentOther} updated={updatedOther} isRearArmor={updatedOther}");
+
+            var otherNotChanged = PrecisionUtils.Equals(currentOther, updatedOther);
+            if (otherNotChanged || !ArmorLocationLocker.IsLocked(widget.loadout.Location, !isRearArmor))
+            {
+                widget.SetArmor(isRearArmor, updated);
+                widget.SetArmor(!isRearArmor, updatedOther);
+            }
+
+            Control.Logger.Trace?.Log($"HandleArmorUpdate updated={updated} maxTotal={maxTotal} maxOther={maxOther} currentOther={currentOther} updatedOther={updatedOther} isRearArmor={updatedOther}");
         }
         else
         {
             updated = Mathf.Max(updated, 0);
+            widget.SetArmor(isRearArmor, updated);
+            Control.Logger.Trace?.Log($"HandleArmorUpdate updated={updated}");
         }
-        Control.Logger.Trace?.Log($"HandleArmorUpdate updated={updated}");
-        widget.SetArmor(isRearArmor, updated);
     }
 
     internal static void OnRefreshArmor(MechLabLocationWidget widget)
     {
-        void RefreshArmorBar(LanceStat armorBar, bool isRearArmor) {
-            armorBar.SetTextColor(UIColor.White, UIColor.White);
+        void RefreshArmorBar(LanceStat lanceStat, bool isRearArmor)
+        {
+            lanceStat.SetTextColor(UIColor.White, UIColor.White);
+            RefreshBarColor(widget, isRearArmor);
 
             void SetButtonColor(string buttonId, UIColor uiColor)
             {
-                var button = armorBar.transform.GetChild(buttonId);
+                var button = lanceStat.transform.GetChild(buttonId);
                 // the plus icon is actually made of two minus icons
                 var icons = button.GetChild("startButtonFill").GetChildren();
                 foreach (var icon in icons)
@@ -164,6 +123,20 @@ internal static class ArmorMaximizerHandler
         {
             RefreshArmorBar(widget.rearArmorBar, true);
         }
+    }
+
+    internal static void OnBarClick(MechLabLocationWidget widget, bool isRearArmor)
+    {
+        ArmorLocationLocker.ToggleLock(widget.loadout.Location, isRearArmor);
+        RefreshBarColor(widget, isRearArmor);
+    }
+
+    private static void RefreshBarColor(MechLabLocationWidget widget, bool isRearArmor)
+    {
+        var isLocked = ArmorLocationLocker.IsLocked(widget.loadout.Location, isRearArmor);
+        var lanceStat = isRearArmor ? widget.rearArmorBar : widget.armorBar;
+        lanceStat.fillColor.SetUIColor(isLocked ? UIColor.Gold : UIColor.White);
+        lanceStat.nameTextColor.SetUIColor(isLocked ? UIColor.Gold : UIColor.White);
     }
 
     private static bool ShiftModifierPressed => Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
