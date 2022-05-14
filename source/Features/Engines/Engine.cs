@@ -28,7 +28,7 @@ public class Engine
         return new Engine(result);
     }
 
-    internal Engine(EngineSearcher.Result result) : this(result.CoolingDef!, result.HeatBlockDef!, result.CoreDef!, result.WeightFactors, reult.HeatSinks)
+    internal Engine(EngineSearcher.Result result) : this(result.CoolingDef!, result.HeatBlockDef!, result.CoreDef!, result.WeightFactors, result.HeatSinks)
     {
     }
 
