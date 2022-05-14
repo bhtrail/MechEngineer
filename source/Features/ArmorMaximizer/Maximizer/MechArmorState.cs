@@ -1,5 +1,4 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
@@ -25,7 +24,7 @@ internal class MechArmorState
 
     private List<ArmorLocationState> Locations { get; } = new();
 
-    private bool IgnoreLocks { get; }
+    private bool LocksEnabled { get; }
     private int Max { get; }
     private int Assigned { get; set; }
     private bool HasChanges { get; set; }
@@ -34,7 +33,7 @@ internal class MechArmorState
 
     private MechArmorState(MechDef mechDef, bool ignoreLocks)
     {
-        IgnoreLocks = ignoreLocks;
+        LocksEnabled = !ignoreLocks;
         Max = CalculateMaximum(mechDef);
         Assigned = PrecisionUtils.RoundDownToInt(mechDef.MechDefAssignedArmor);
 
@@ -139,9 +138,9 @@ internal class MechArmorState
     {
         updates = Locations.ToList();
         updates.RemoveAll(s => s.IsEmpty);
-        if (!IgnoreLocks)
+        if (LocksEnabled)
         {
-            updates.RemoveAll(s =>ArmorLocationLocker.IsLocked(s.Location));
+            updates.RemoveAll(s => ArmorLocationLocker.IsLocked(s.Location));
         }
         foreach (var location in updates)
         {
@@ -164,11 +163,11 @@ internal class MechArmorState
 
         updates = Locations.ToList();
         updates.RemoveAll(s => s.IsFull || (s.LinkedChassisLocationState?.IsFull ?? false));
-        if (!IgnoreLocks)
+        if (LocksEnabled)
         {
-            updates.RemoveAll(s =>ArmorLocationLocker.IsLocked(s.Location));
+            updates.RemoveAll(s => ArmorLocationLocker.IsLocked(s.Location));
         }
-        var tmp = Locations.ToList();
+        var tmp = updates.ToList();
 
         // this does a lot of looping, just 20ms on my machine though for an empty atlas
         Control.Logger.Trace?.Log($"Maximize before loop");

@@ -1,5 +1,4 @@
-﻿using BattleTech;
-using MechEngineer.Features.AccuracyEffects;
+﻿using MechEngineer.Features.AccuracyEffects;
 using MechEngineer.Features.ArmorMaximizer;
 using MechEngineer.Features.ArmorStructureChanges;
 using MechEngineer.Features.ArmorStructureRatio;
@@ -8,6 +7,7 @@ using MechEngineer.Features.BetterLog;
 using MechEngineer.Features.ComponentExplosions;
 using MechEngineer.Features.CompressFloatieMessages;
 using MechEngineer.Features.CriticalEffects;
+using MechEngineer.Features.CustomCapacities;
 using MechEngineer.Features.DamageIgnore;
 using MechEngineer.Features.DebugCycleCombatSounds;
 using MechEngineer.Features.DebugSaveMechToFile;
@@ -31,16 +31,11 @@ using MechEngineer.Features.ShutdownInjuryProtection;
 using MechEngineer.Features.TagManager;
 using MechEngineer.Features.TurretLimitedAmmo;
 using MechEngineer.Features.TurretMechComponents;
+using MechEngineer.Misc;
 
 namespace MechEngineer;
 
-public class AddHelper
-{
-    public string ComponentDefId { get; set; }
-    public ChassisLocations ChassisLocation { get; set; }
-    public ComponentType ComponentType { get; set; }
-}
-
+[UsedByFastJson]
 internal class MechEngineerSettings
 {
     public bool GeneratedSettingsFilesReadonly = true;
@@ -75,6 +70,7 @@ internal class MechEngineerSettings
     public TurretLimitedAmmoSettings TurretLimitedAmmo = new();
     public TurretMechComponentSettings TurretMechComponents = new();
     public TagManagerSettings TagManager = new();
+    public CustomCapacitiesSettings CustomCapacities = new();
 
     public PerformanceSettings Performance = new();
 

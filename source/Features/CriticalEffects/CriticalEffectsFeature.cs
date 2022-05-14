@@ -12,19 +12,19 @@ internal class CriticalEffectsFeature : Feature<CriticalEffectsSettings>
 
     internal override bool Enabled => base.Enabled && PlaceholderEffectsFeature.Shared.Loaded;
 
-    internal override CriticalEffectsSettings Settings => Control.settings.CriticalEffects;
+    internal override CriticalEffectsSettings Settings => Control.Settings.CriticalEffects;
 
     internal static CriticalEffectsSettings settings => Shared.Settings;
 
-    internal override void SetupResources(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources)
+    protected override void SetupResources(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources)
     {
-        Resources = SettingsResourcesTools.Enumerate<EffectData>("MECriticalEffects", customResources)
+        Resources = SettingsResourcesTools.Enumerate<EffectData>("MEStatusEffects", customResources)
             .ToDictionary(entry => entry.Description.Id);
     }
 
     private static Dictionary<string, EffectData> Resources { get; set; } = new();
 
-    internal static EffectData GetEffectData(string effectId)
+    internal static EffectData? GetEffectData(string effectId)
     {
         if (Resources.TryGetValue(effectId, out var effectData))
         {

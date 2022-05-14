@@ -8,11 +8,11 @@ internal class AutoFixerFeature : Feature<AutoFixerSettings>
 {
     internal static readonly AutoFixerFeature Shared = new();
 
-    internal override AutoFixerSettings Settings => Control.settings.AutoFixer;
+    internal override AutoFixerSettings Settings => Control.Settings.AutoFixer;
 
     internal static AutoFixerSettings settings => Shared.Settings;
 
-    internal override void SetupFeatureLoaded()
+    protected override void SetupFeatureLoaded()
     {
         Registry.RegisterPreProcessor(CockpitHandler.Shared);
         Registry.RegisterPreProcessor(SensorsAHandler.Shared);
@@ -23,10 +23,6 @@ internal class AutoFixerFeature : Feature<AutoFixerSettings>
         CustomComponents.AutoFixer.Shared.RegisterMechFixer(AutoFixer.Shared.AutoFix);
     }
 
-    public AutoFixerFeature()
-    {
-        IgnoreAutofixTagsLazy = new Lazy<TagSet>(() => new TagSet(Settings.IgnoreAutofixTags));
-    }
-    internal readonly Lazy<TagSet> IgnoreAutofixTagsLazy;
+    private readonly Lazy<TagSet> IgnoreAutofixTagsLazy = new Lazy<TagSet>(() => new TagSet(settings.IgnoreAutofixTags));
     internal TagSet IgnoreAutofixTags => IgnoreAutofixTagsLazy.Value;
 }

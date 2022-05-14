@@ -9,7 +9,7 @@ internal class BetterLogFeature : Feature<BetterLogSettings>
 {
     internal static readonly BetterLogFeature Shared = new();
 
-    internal override BetterLogSettings Settings => Control.settings.BetterLog;
+    internal override BetterLogSettings Settings => Control.Settings.BetterLog;
 
     private static readonly List<BetterLogger> Loggers = new();
 
@@ -18,7 +18,9 @@ internal class BetterLogFeature : Feature<BetterLogSettings>
         var log = Logger.GetLogger(name, LogLevel.Debug);
         var appender = new BetterLogAppender(path);
         Logger.AddAppender(name, appender);
-        Logger.SetLoggerLevel(log.Name, GetConfiguredLogLevel(log.Name));
+        // ModTek first loads mod DLLs, then merges json, then reloads debug settings
+        // that is too late for us
+        // Logger.SetLoggerLevel(log.Name, GetConfiguredLogLevel(log.Name));
         var logger = new BetterLogger(log, settings.TraceEnabled);
         Loggers.Add(logger);
         return logger;

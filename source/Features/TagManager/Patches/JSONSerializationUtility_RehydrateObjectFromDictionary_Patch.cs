@@ -3,18 +3,21 @@ using Harmony;
 using HBS.Util;
 using System;
 using System.Reflection;
+using MechEngineer.Misc;
 
 namespace MechEngineer.Features.TagManager.Patches;
 
 [HarmonyPatch]
 public static class JSONSerializationUtility_RehydrateObjectFromDictionary_Patch
 {
+    [UsedByHarmony]
     public static MethodBase TargetMethod()
     {
-        return typeof(JSONSerializationUtility).GetMethod(nameof(JSONSerializationUtility.RehydrateObjectFromDictionary), BindingFlags.NonPublic | BindingFlags.Static);
+        return typeof(JSONSerializationUtility).GetMethod(nameof(JSONSerializationUtility.RehydrateObjectFromDictionary), BindingFlags.NonPublic | BindingFlags.Static)!;
     }
 
     [HarmonyPriority(Priority.High)]
+    [HarmonyPostfix]
     public static void Postfix(object target)
     {
         try

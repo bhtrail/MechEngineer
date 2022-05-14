@@ -9,9 +9,14 @@ using MechEngineer.Features.OverrideDescriptions;
 namespace MechEngineer.Features.Engines;
 
 [CustomComponent("EngineCore")]
-public class EngineCoreDef : SimpleCustom<HeatSinkDef>, IAdjustTooltipEquipment, IAdjustSlotElement, IMechLabFilter
+public class EngineCoreDef : SimpleCustom<HeatSinkDef>, IAdjustTooltipEquipment, IAdjustSlotElement, IMechLabFilter, IValueComponent<int>
 {
     public int Rating { get; set; }
+
+    public void LoadValue(int value)
+    {
+        Rating = value;
+    }
 
     // This methid goes public -- bhtrail
     public EngineMovement GetMovement(float tonnage)
@@ -26,12 +31,12 @@ public class EngineCoreDef : SimpleCustom<HeatSinkDef>, IAdjustTooltipEquipment,
 
     public bool CheckFilter(MechLabPanel panel)
     {
-        if (Control.settings.Engine.LimitEngineCoresToTonnage)
+        if (Control.Settings.Engine.LimitEngineCoresToTonnage)
         {
 
-            if (!string.IsNullOrEmpty(Control.settings.Engine.IgnoreLimitEngineChassisTag) &&
+            if (!string.IsNullOrEmpty(Control.Settings.Engine.IgnoreLimitEngineChassisTag) &&
                 panel.activeMechDef.Chassis.ChassisTags.Contains(
-                    Control.settings.Engine.IgnoreLimitEngineChassisTag))
+                    Control.Settings.Engine.IgnoreLimitEngineChassisTag))
             {
                 return true;
             }
@@ -50,13 +55,13 @@ public class EngineCoreDef : SimpleCustom<HeatSinkDef>, IAdjustTooltipEquipment,
             return;
         }
 
-        var panel = Global.ActiveMechLabPanel;
-        var mechDef = panel?.CreateMechDef();
-        var engine = mechDef?.GetEngine();
+        var mechDefNullable = Global.ActiveMechDef;
+        var engine = mechDefNullable?.GetEngine();
         if (engine == null)
         {
             return;
         }
+        var mechDef = mechDefNullable!;
 
         engine.CoreDef = coreDef;
 

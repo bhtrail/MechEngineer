@@ -9,6 +9,7 @@ namespace MechEngineer.Features.Engines.Patches;
 [HarmonyPatch(typeof(Contract), nameof(Contract.GenerateSalvage))]
 public static class Contract_GenerateSalvage_Patch
 {
+    [HarmonyTranspiler]
     public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
     {
         return instructions
@@ -22,7 +23,7 @@ public static class Contract_GenerateSalvage_Patch
             );
     }
 
-    private static MechDef lastMechDef;
+    private static MechDef? lastMechDef;
     public static bool IsLocationDestroyed(this MechDef mechDef, ChassisLocations location)
     {
         lastMechDef = mechDef;

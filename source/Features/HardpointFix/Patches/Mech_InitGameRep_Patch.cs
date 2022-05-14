@@ -12,6 +12,7 @@ public static class Mech_InitGameRep_Patch
 {
     [HarmonyBefore(Mods.AC, Mods.CU)]
     [HarmonyPriority(Priority.High)]
+    [HarmonyPrefix]
     public static void Prefix(Mech __instance)
     {
         try
@@ -19,6 +20,7 @@ public static class Mech_InitGameRep_Patch
             var componentRefs = __instance.Weapons.Union(__instance.supportComponents)
                 .Select(w => w.baseComponentRef as MechComponentRef)
                 .Where(c => c != null)
+                .Select(c => c!)
                 .ToList();
 
             CalculatorSetup.Setup(__instance.MechDef.Chassis, componentRefs);
@@ -29,6 +31,7 @@ public static class Mech_InitGameRep_Patch
         }
     }
 
+    [HarmonyPostfix]
     public static void Postfix()
     {
         CalculatorSetup.Reset();

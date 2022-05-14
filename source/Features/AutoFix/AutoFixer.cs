@@ -17,10 +17,10 @@ internal class AutoFixer : IAutoFixMechDef
 {
     internal static readonly AutoFixer Shared = new();
 
-    public void AutoFix(List<MechDef> mechDefs, SimGameState simgame)
+    public void AutoFix(List<MechDef> mechDefs, SimGameState? simGameState)
     {
         // we dont fix save games anymore, have to have money and time to fix an ongoing campaign
-        if (simgame != null)
+        if (simGameState != null)
         {
             return;
         }
@@ -74,54 +74,35 @@ internal class AutoFixer : IAutoFixMechDef
 
         var dataManager = mechDef.DataManager;
         {
-            var lowerDef = dataManager.UpgradeDefs.Get("emod_arm_part_lower");
-            //var lowerCat = lowerDef.GetCategory("ArmLowerActuator");
-            var handDef = dataManager.UpgradeDefs.Get("emod_arm_part_hand");
-            //var handCat = handDef.GetCategory("ArmHandActuator");
-
-            bool Add(MechComponentDef def, ChassisLocations location)
+            bool CheckAndAdd(ChassisLocations location, string defId, string categoryId, string tagLimit)
             {
-                if (builder.Contains(def, location))
+                if (mechDef.Chassis.ChassisTags.Contains(tagLimit))
+                {
+                    return false;
+                }
+                if (builder.Inventory.Any(x => x.MountedLocation == location && x.GetCategory(categoryId) != null))
                 {
                     return true;
                 }
+                var def = dataManager.UpgradeDefs.Get(defId);
                 return builder.Add(def, location) != null;
             }
 
+            void CheckArm(ChassisLocations location)
             {
-                // TODO I need
-                //   mechDef.GetLimit("ArmLowerActuator", LeftArm).Max > 0;
-                // instead of
-                var go = !mechDef.Chassis.ChassisTags.Contains("ArmLimitUpperLeft");
-                if (go)
+                var leftRight = location == ChassisLocations.LeftArm ? "Left" : "Right";
+                // TODO normalize naming across the board
+                // Gear_Actuator_Arm_Lower
+                // ActuatorArmLower
+                // LimitActuatorArmUpper
+                if (CheckAndAdd(location, "emod_arm_part_lower", "ArmLowerActuator", "ArmLimitUpper"+leftRight))
                 {
-                    go = Add(lowerDef, ChassisLocations.LeftArm);
-                }
-                if (go)
-                {
-                    go = !mechDef.Chassis.ChassisTags.Contains("ArmLimitLowerLeft");
-                }
-                if (go)
-                {
-                    Add(handDef, ChassisLocations.LeftArm);
+                    CheckAndAdd(location, "emod_arm_part_hand", "ArmHandActuator", "ArmLimitLower"+leftRight);
                 }
             }
 
-            {
-                var go = !mechDef.Chassis.ChassisTags.Contains("ArmLimitUpperRight");
-                if (go)
-                {
-                    go = Add(lowerDef, ChassisLocations.RightArm);
-                }
-                if (go)
-                {
-                    go = !mechDef.Chassis.ChassisTags.Contains("ArmLimitLowerRight");
-                }
-                if (go)
-                {
-                    Add(handDef, ChassisLocations.RightArm);
-                }
-            }
+            CheckArm(ChassisLocations.LeftArm);
+            CheckArm(ChassisLocations.RightArm);
 
             mechDef.SetInventory(builder.Inventory.OrderBy(element => element, new OrderComparer()).ToArray());
         }
@@ -129,6 +110,14 @@ internal class AutoFixer : IAutoFixMechDef
         ArmorStructureRatioFeature.Shared.AutoFixMechDef(mechDef);
 
         var res = EngineSearcher.SearchInventory(builder.Inventory);
+        if (res.CoolingDef == null)
+        {
+            throw new NullReferenceException("No CoolingDef found");
+        }
+        if (res.HeatBlockDef == null)
+        {
+            throw new NullReferenceException("No HeatBlockDef found");
+        }
 
         var engineHeatSinkDef = dataManager.HeatSinkDefs.Get(res.CoolingDef.HeatSinkDefId).GetComponent<EngineHeatSinkDef>();
 
@@ -136,7 +125,7 @@ internal class AutoFixer : IAutoFixMechDef
         {
             // remove incompatible heat sinks
             var incompatibleHeatSinks = builder.Inventory
-                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HSCategory != engineHeatSinkDef.HSCategory)
+                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory != engineHeatSinkDef.HeatSinkCategory)
                 .ToList();
 
             foreach (var incompatibleHeatSink in incompatibleHeatSinks)
@@ -147,7 +136,7 @@ internal class AutoFixer : IAutoFixMechDef
             }
         }
 
-        Engine engine = null;
+        Engine? engine = null;
         if (res.CoreDef != null)
         {
             Control.Logger.Debug?.Log($" Found an existing engine");
@@ -163,7 +152,7 @@ internal class AutoFixer : IAutoFixMechDef
                 var current = oldCurrent;
 
                 var heatSinks = builder.Inventory
-                    .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HSCategory == engineHeatSinkDef.HSCategory)
+                    .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory)
                     .ToList();
 
                 while (current < max && heatSinks.Count > 0)
@@ -199,7 +188,7 @@ internal class AutoFixer : IAutoFixMechDef
             var jumpJetTonnage = jumpJets.Select(x => x.Def.Tonnage).FirstOrDefault(); //0 if no jjs
 
             var externalHeatSinks = builder.Inventory
-                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HSCategory == engineHeatSinkDef.HSCategory)
+                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory)
                 .ToList();
             var internalHeatSinksCount = res.HeatBlockDef.HeatSinkCount;
 
@@ -308,7 +297,10 @@ internal class AutoFixer : IAutoFixMechDef
             {
                 Control.Logger.Debug?.Log($" engine={engine.CoreDef} freeTonnage={freeTonnage}");
                 var dummyCore = builder.Inventory.FirstOrDefault(r => r.ComponentDefID == AutoFixerFeature.settings.MechDefCoreDummy);
-                builder.Remove(dummyCore);
+                if (dummyCore != null)
+                {
+                    builder.Remove(dummyCore);
+                }
                 builder.Add(engine.CoreDef.Def, ChassisLocations.CenterTorso, true);
 
                 // convert internal heat sinks back as external ones if the mech can fit it
@@ -342,7 +334,7 @@ internal class AutoFixer : IAutoFixMechDef
             var max = engine.HeatSinkExternalFreeMaxCount;
             var current = builder.Inventory
                 .Count(r => r.Def.Is<EngineHeatSinkDef>(out var hs)
-                            && hs.HSCategory == engineHeatSinkDef.HSCategory);
+                            && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory);
             for (var i = current; i < max; i++)
             {
                 builder.Add(engineHeatSinkDef.Def, ChassisLocations.Head, true);

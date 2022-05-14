@@ -5,6 +5,7 @@ using BattleTech.UI;
 using Harmony;
 using HBS;
 using HBS.Scripting.Reflection;
+using MechEngineer.Misc;
 using TMPro;
 
 namespace MechEngineer.Features.DebugCycleCombatSounds.Patches;
@@ -12,13 +13,16 @@ namespace MechEngineer.Features.DebugCycleCombatSounds.Patches;
 [HarmonyPatch(typeof(MainMenu), nameof(MainMenu.ReceiveButtonPress))]
 public static class MainMenu_ReceiveButtonPress_Patch
 {
+    [UsedByHarmony]
     public static bool Prepare()
     {
-        return !DebugCycleCombatSoundsFeature.settings.DebugMainCycleSoundsOnReceiveButtonEnabled;
+        return DebugCycleCombatSoundsFeature.settings.DebugMainCycleSoundsOnReceiveButtonEnabled;
     }
 
-    private static IEnumerator<string> Iterator = null;
+    private static IEnumerator<string>? Iterator = null;
 
+    // ReSharper disable once InconsistentNaming
+    [HarmonyPrefix]
     public static bool Prefix(TextMeshProUGUI ____version, string button)
     {
         if (Iterator == null || button == DebugCycleCombatSoundsFeature.Shared.Settings.SpecificButton && !Iterator.MoveNext())

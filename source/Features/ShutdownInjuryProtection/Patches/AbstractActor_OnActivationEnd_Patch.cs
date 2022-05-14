@@ -1,17 +1,20 @@
 ﻿using System;
 using BattleTech;
 using Harmony;
+using MechEngineer.Misc;
 
 namespace MechEngineer.Features.ShutdownInjuryProtection.Patches;
 
 [HarmonyPatch(typeof(Mech), nameof(Mech.OnActivationEnd))]
 public static class Mech_OnActivationEnd_Patch
 {
+    [UsedByHarmony]
     public static bool Prepare()
     {
-        return !ShutdownInjuryProtectionFeature.settings.OverheatedOnActivationEndInjuryEnabled;
+        return ShutdownInjuryProtectionFeature.settings.OverheatedOnActivationEndInjuryEnabled;
     }
 
+    [HarmonyPrefix]
     public static void Prefix(Mech __instance, string sourceID, int stackItemID)
     {
         try

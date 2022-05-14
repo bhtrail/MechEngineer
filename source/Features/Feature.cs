@@ -5,9 +5,11 @@ using System.Reflection.Emit;
 using BattleTech;
 using CustomComponents;
 using Harmony;
+using MechEngineer.Misc;
 
 namespace MechEngineer.Features;
 
+[UsedByFastJson]
 public interface ISettings
 {
     bool Enabled { get; }
@@ -25,13 +27,13 @@ internal abstract class Feature<T> : IFeature where T : ISettings
     internal virtual bool Enabled => Settings?.Enabled ?? false;
 
     // called when the feature is enabled and its patches have been successfully loaded
-    internal virtual void SetupFeatureLoaded()
+    protected virtual void SetupFeatureLoaded()
     {
         // noop
     }
 
     // called setup a feature via resources
-    internal virtual void SetupResources(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources)
+    protected virtual void SetupResources(Dictionary<string, Dictionary<string, VersionManifestEntry>> customResources)
     {
         // noop
     }
@@ -83,7 +85,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
 
                 try
                 {
-                    RegisterCustomCandidates(type, typesInNamespace);
+                    RegisterCustomCandidates(typesInNamespace);
                 }
                 catch (Exception e)
                 {
@@ -114,7 +116,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
             PatchTypes(harmony, types);
         }
 
-        private static void RegisterCustomCandidates(Type rootType, List<Type> candidates)
+        private static void RegisterCustomCandidates(List<Type> candidates)
         {
             var customType = typeof(ICustom);
             var types = candidates.Where(type => customType.IsAssignableFrom(type)).ToArray();
@@ -149,7 +151,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
                     continue;
                 }
 
-                Control.Logger.Debug?.Log($"found {type.Namespace}.{type.Name}");
+                // Control.Logger.Trace?.Log($"found {type.Namespace}.{type.Name}");
 
                 yield return type;
             }
@@ -188,7 +190,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
 
             var info = HarmonyMethod.Merge(parentMethodInfos);
             var processor = new PatchProcessor(harmony, type, info);
-            return new Hook(processor.Patch(), processor);
+            return new(processor.Patch(), processor);
         }
 
         private class Hook

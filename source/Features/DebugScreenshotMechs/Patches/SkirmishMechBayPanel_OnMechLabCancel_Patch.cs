@@ -13,6 +13,7 @@ namespace MechEngineer.Features.DebugScreenshotMechs.Patches;
 [HarmonyPatch(typeof(SkirmishMechBayPanel), nameof(SkirmishMechBayPanel.OnMechLabCancel))]
 public static class SkirmishMechBayPanel_OnMechLabCancel_Patch
 {
+    [HarmonyPostfix]
     public static void Postfix(SkirmishMechBayPanel __instance)
     {
         try
@@ -25,7 +26,7 @@ public static class SkirmishMechBayPanel_OnMechLabCancel_Patch
         }
     }
 
-    private static IEnumerator<MechDef> mechDefsIterator;
+    private static IEnumerator<MechDef>? mechDefsIterator;
     private static IEnumerator CallBack(SkirmishMechBayPanel panel)
     {
         yield return new WaitForEndOfFrame();
@@ -38,6 +39,10 @@ public static class SkirmishMechBayPanel_OnMechLabCancel_Patch
             while (mechDefsIterator.MoveNext())
             {
                 var mechDef = mechDefsIterator.Current;
+                if (mechDef == null)
+                {
+                    continue;
+                }
                 var screenshotPath = DebugScreenshotMechsFeature.Shared.ScreenshotPath(mechDef);
                 if (File.Exists(screenshotPath))
                 {

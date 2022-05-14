@@ -10,6 +10,7 @@ namespace MechEngineer.Features.AutoFix.Patches;
 [HarmonyPatch(typeof(JumpJetDef), nameof(JumpJetDef.FromJSON))]
 public static class JumpJetDef_FromJSON_Patch
 {
+    [HarmonyPostfix]
     // reduce upgrade components for the center torso that are 3 or larger
     public static void Postfix(JumpJetDef __instance)
     {
@@ -23,11 +24,11 @@ public static class JumpJetDef_FromJSON_Patch
         }
     }
 
-    internal static void JumpJetDef_FromJSON(JumpJetDef def)
+    private static void JumpJetDef_FromJSON(JumpJetDef def)
     {
         {
             var statisticData = StatCollectionExtension
-                .JumpCapacity(null)
+                .JumpCapacity(null!)
                 .CreateStatisticData(
                     StatCollection.StatOperation.Float_Add,
                     def.JumpCapacity
@@ -39,7 +40,7 @@ public static class JumpJetDef_FromJSON_Patch
         if (EngineFeature.settings.JumpJetDefaultJumpHeat.HasValue)
         {
             var statisticData = StatCollectionExtension
-                .JumpHeat(null)
+                .JumpHeat(null!)
                 .CreateStatisticData(
                     StatCollection.StatOperation.Float_Add,
                     EngineFeature.settings.JumpJetDefaultJumpHeat.Value
