@@ -10,7 +10,7 @@
 			"Value": [
                 {
                     "MountedLocation" : "CenterTorso",
-                    "ComponentDefID" : "Gear_Myomer_TSM_Prototype",
+                    "ComponentDefID" : "Gear_Myomer_TSM_Industrial",
                     "SimGameUID" : "",
                     "ComponentDefType" : "Upgrade",
                     "HardpointSlot" : -1,
@@ -23,6 +23,18 @@
                 {
                     "MountedLocation" : "RightArm",
                     "ComponentDefID" : "emod_arm_part_lower",
+                    "SimGameUID" : "",
+                    "ComponentDefType" : "Upgrade",
+                    "HardpointSlot" : -1,
+                    "IsFixed" : true,
+                    "GUID" : null,
+                    "DamageLevel" : "Functional",
+                    "prefabName" : null,
+                    "hasPrefabName" : false
+                },
+                {
+                    "MountedLocation" : "RightArm",
+                    "ComponentDefID" : "emod_arm_part_hand",
                     "SimGameUID" : "",
                     "ComponentDefType" : "Upgrade",
                     "HardpointSlot" : -1,

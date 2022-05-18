@@ -1,6 +1,7 @@
 {
 	"Custom": {
         "BonusDescriptions": [
+            "CarryHandCapacityPercent: 5",
             "MeleeAccuracy: + 1"
         ],
         "Category" : { "CategoryID" : "ArmHandActuator" },

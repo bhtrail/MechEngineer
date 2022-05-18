@@ -1,17 +1,54 @@
-﻿namespace MechEngineer.Features.CustomCapacities
+﻿namespace MechEngineer.Features.CustomCapacities;
+
+public class CustomCapacitiesSettings : ISettings
 {
-    public class CustomCapacitiesSettings : ISettings
+    public bool Enabled { get; set; } = true;
+    public string EnabledDescription => "Enables some carry rules.";
+
+    public string CarryHandErrorOverweight = "OVERWEIGHT: 'Mechs handheld carry weight exceeds maximum.";
+    public string CarryHandErrorOneFreeHand = "OVERWEIGHT: 'Mechs handheld carry weight requires one free hand.";
+
+    public CustomCapacity CarryWeight = new()
     {
-        public bool Enabled { get; set; } = true;
-        public string EnabledDescription => "Enables some carry rules.";
+        Collection = "carry_weight",
+        Label = "Carry Weight",
+        Format = "0.0",
+        ErrorOverweight = "OVERWEIGHT: 'Mechs total carry weight exceeds maximum.",
+        ToolTipHeader = "Carry Weight",
+        ToolTipBody = "Carry weight represents the total carry capacity of a mech on top of the normal chassis weight internal capacity." +
+                      " Each hand actuator allows to carry an equivalent of up to 5% chassis maximum tonnage." +
+                      " If a melee weapon is too heavy for a single arm, it can be held two-handed by combining both hands carry capacities.",
+        HideIfNoUsageAndCapacity = true
+    };
 
-        public string ErrorOverweight = "OVERWEIGHT: 'Mechs carry weight exceeds maximum achieved with installed hand actuators.";
-        public string ErrorOneFreeHand = "OVERWEIGHT: 'Mechs carry weight requires one free hand.";
+    public CustomCapacity[] CustomCapacities =
+    {
+        new()
+        {
+            Collection = "Special",
+            Label = "e.g. Special",
+            Format = "0",
+            ErrorOverweight = "OVERUSE: 'Mechs special points exceeds maximum.",
+            ToolTipHeader = "Special Points",
+            ToolTipBody = "This is just an example on how you can define custom capacities on anything and use it up on anything." +
+                          " Useful if you want some more knapsack problem solving gameplay.",
+            HideIfNoUsageAndCapacity = true
+        }
+    };
 
-        // TODO implement UI, best something new inside hardpoint list or above
-        // TODO implement status effect templating to easily fix arm actuator dmg mods
-        // TODO move all arm actuators to same mechanism as the hachet
-        // TODO normalize melee upgrade damage: TSM, ArmActuator upgrades, Hatchet
-        public string LocationLabel = "HandHeld {0:0.00}/{1:0.00}t";
+    public class CustomCapacity
+    {
+        public string Collection { get; set; } = null!;
+        public string CollectionDescription => "The collection id that is referenced from the CapacityMod custom";
+
+        public string Label { get; set; } = null!;
+        public string Format { get; set; } = null!;
+        public string ErrorOverweight { get; set; } = null!;
+
+        public string? ToolTipHeader { get; set; }
+        public string? ToolTipBody { get; set; }
+
+        public bool HideIfNoUsageAndCapacity { get; set; }
+        public string HideIfNoUsageAndCapacityDescription => "Hides the capacity if usage and capacity amounts are 0.";
     }
 }

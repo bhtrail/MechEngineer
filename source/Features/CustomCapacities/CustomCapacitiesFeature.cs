@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using BattleTech;
 using CustomComponents;
 using MechEngineer.Features.OverrideTonnage;
@@ -19,6 +20,27 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
         Validator.RegisterMechValidator(ccValidation.ValidateMech, ccValidation.ValidateMechCanBeFielded);
     }
 
+    internal static void CalculateCustomCapacityResults(MechDef mechDef, string collectionId, out float capacity, out float usage, out bool hasError)
+    {
+        if (collectionId == Shared.Settings.CarryWeight.Collection)
+        {
+            var context = CalculateCarryWeight(mechDef);
+            capacity = context.TotalCapacity;
+            usage = context.TotalUsage;
+            hasError = context.IsTotalOverweight || context.IsHandOverweight || context.IsHandMissingFreeHand;
+            return;
+        }
+
+        CalculateCapacity(
+            mechDef,
+            ChassisLocations.All,
+            collectionId,
+            out capacity,
+            out usage
+        );
+        hasError = PrecisionUtils.SmallerThan(capacity, usage);
+    }
+
     public void ValidateMech(MechDef mechDef, Errors errors)
     {
         ValidateCarryWeight(mechDef, errors);
@@ -28,78 +50,133 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
     // HandHeld Weapons - TacOps p.316
     private void ValidateCarryWeight(MechDef mechDef, Errors errors)
     {
-        var totalCapacity = 0f;
-        var totalUsage = 0f;
+        var context = CalculateCarryWeight(mechDef);
 
-        var globalCapacityFactor = mechDef.Inventory
-            .Select(x => x.GetComponent<CarryCapacityFactorCustom>())
-            .Where(x => x != null)
-            .Select(x => x.Value)
-            .Aggregate(1f, (previous, value) => previous * value);
+        if (context.IsHandOverweight)
+        {
+            errors.Add(MechValidationType.Overweight, Settings.CarryHandErrorOverweight);
+        }
+        else if (context.IsHandMissingFreeHand)
+        {
+            errors.Add(MechValidationType.Overweight, Settings.CarryHandErrorOneFreeHand);
+        }
+        else if (context.IsTotalOverweight)
+        {
+            errors.Add(MechValidationType.Overweight, Settings.CarryWeight.ErrorOverweight);
+        }
+    }
 
+    internal static CarryContext CalculateCarryWeight(MechDef mechDef)
+    {
+        var context = new CarryContext();
+        CalculateCarryMech(mechDef, context);
+        CalculateCarryHand(mechDef, context);
+        return context;
+    }
+
+    private static void CalculateCarryMech(MechDef mechDef, CarryContext context)
+    {
+        CalculateCapacity(
+            mechDef,
+            ChassisLocations.All,
+            CarryOnMechCollectionId,
+            out context.MechCapacity,
+            out context.MechUsage
+        );
+    }
+
+    private static void CalculateCarryHand(MechDef mechDef, CarryContext context)
+    {
         MinHandReq CheckArm(ChassisLocations location)
         {
-            var capacity = GetCarryCapacity(mechDef, location, globalCapacityFactor);
-            var usage = GetCarryUsage(mechDef, location);
+            CalculateCapacity(mechDef, location, CarryInHandCollectionId, out var capacityOnLocation, out var usageOnLocation);
 
-            totalCapacity += capacity;
-            totalUsage += usage;
+            context.HandCapacity += capacityOnLocation;
+            context.HandUsage += usageOnLocation;
 
-            if (PrecisionUtils.SmallerThan(capacity, usage))
+            if (PrecisionUtils.SmallerThan(capacityOnLocation, usageOnLocation))
             {
                 return MinHandReq.Two;
             }
-            if (PrecisionUtils.SmallerThan(0, usage))
+            if (PrecisionUtils.SmallerThan(0, usageOnLocation))
             {
                 return MinHandReq.One;
             }
             return MinHandReq.None;
         }
-        var left = CheckArm(ChassisLocations.LeftArm);
-        var right = CheckArm(ChassisLocations.RightArm);
-
-        if (PrecisionUtils.SmallerThan(totalCapacity, totalUsage))
-        {
-            errors.Add(MechValidationType.Overweight, Settings.ErrorOverweight);
-        }
-
-        if ((left == MinHandReq.Two && right != MinHandReq.None) || (right == MinHandReq.Two && left != MinHandReq.None))
-        {
-            errors.Add(MechValidationType.Overweight, Settings.ErrorOneFreeHand);
-        }
+        context.LeftHandReq = CheckArm(ChassisLocations.LeftArm);
+        context.RightHandReq = CheckArm(ChassisLocations.RightArm);
     }
 
-    private enum MinHandReq
+    internal class CarryContext
+    {
+        internal float HandCapacity;
+        internal float HandUsage;
+
+        internal bool IsHandOverweight => PrecisionUtils.SmallerThan(HandCapacity, HandUsage);
+
+        internal float MechCapacity;
+        internal float MechUsage;
+
+        internal float TotalCapacity => HandCapacity + MechCapacity;
+        internal float TotalUsage => HandUsage + MechUsage;
+
+        internal bool IsTotalOverweight => PrecisionUtils.SmallerThan(TotalCapacity, TotalUsage);
+
+        internal MinHandReq LeftHandReq;
+        internal MinHandReq RightHandReq;
+
+        internal bool IsHandMissingFreeHand =>
+            (LeftHandReq == MinHandReq.Two && RightHandReq != MinHandReq.None)
+            || (RightHandReq == MinHandReq.Two && LeftHandReq != MinHandReq.None);
+    }
+
+    internal enum MinHandReq
     {
         None,
         One,
         Two
     }
 
-    private static float GetCarryCapacity(MechDef mechDef, ChassisLocations location, float globalCapacityFactor)
-    {
-        var baseCapacity = mechDef.Inventory
-            .Where(x => x.MountedLocation == location)
-            .Select(x => x.GetComponent<CarryCapacityOnArmChassisFactorCustom>())
-            .Where(x => x != null)
-            .Select(x => x.Value)
-            .Aggregate(0f, (previous, value) => previous + mechDef.Chassis.Tonnage * value);
+    internal const string CarryInHandCollectionId = "CarryInHand";
+    internal const string CarryOnMechCollectionId = "CarryOnMech";
 
-        if (PrecisionUtils.Equals(baseCapacity, 0))
+    private static void CalculateCapacity(MechDef mechDef, ChassisLocations location, string collectionId, out float capacity, out float usage)
+    {
+        var mods = mechDef.Inventory
+            .SelectMany(r =>
+                r.GetComponents<CapacityModCustom>()
+                .Where(mod => mod.Collection == collectionId)
+                .Where(mod => !mod.IsLocationRestricted || (r.MountedLocation & location) != ChassisLocations.None)
+            )
+            .OrderBy(m => m.Priority)
+            .ThenBy(m => m.Operation)
+            .ToList();
+
+        float ApplyOperation(float previous, CapacityModCustom mod)
         {
-            return 0;
+            var factor = mod.QuantityFactorType switch
+            {
+                QuantityFactorType.One => 1f,
+                QuantityFactorType.ChassisTonnage => mechDef.Chassis.Tonnage,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            var value = mod.Quantity * factor;
+            return mod.Operation switch
+            {
+                OperationType.Set => value,
+                OperationType.Add => previous + value,
+                OperationType.Multiply => previous * value,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
-        return baseCapacity * globalCapacityFactor;
-    }
+        capacity = mods
+            .Where(m => !m.IsUsage)
+            .Aggregate(0f, ApplyOperation);
 
-    private static float GetCarryUsage(MechDef mechDef, ChassisLocations location)
-    {
-        return mechDef.Inventory
-            .Where(x => x.MountedLocation == location)
-            .Select(x => x.GetComponent<CarryUsageCustom>())
-            .Where(x => x != null)
-            .Select(x => x.Value)
-            .Aggregate(0f, (previous, value) => previous + value);
+        usage = mods
+            .Where(m => m.IsUsage)
+            .Aggregate(0f, ApplyOperation);
     }
 }

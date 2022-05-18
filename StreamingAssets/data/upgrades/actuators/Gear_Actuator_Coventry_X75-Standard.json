@@ -1,0 +1,20 @@
+{
+    "Custom" : {
+        "Category" : { "CategoryID" : "HandHeld" },
+        "BonusDescriptions": [
+            "MeleeDamage: + 15",
+            "CarryHandUsage: 2"
+        ],
+        "StatusEffects": [
+            "StatusEffect-Attack_DamageMelee-T{amt}: 15"
+        ],
+        "CarryHandUsage" : 2
+    },
+    "Description" : {
+        "UIName" : "Sword + +",
+        "Icon" : "UixSvgIcon_specialEquip_Melee"
+    },
+    "InventorySize" : 4,
+    "Tonnage" : 1,
+    "statusEffects" : null
+}

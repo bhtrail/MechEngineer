@@ -67,15 +67,33 @@
         },
         {
             "Bonus" : "MeleeDamage",
-            "Short" : "{0} Mel. Dmg",
+            "Short" : "{0} Me. Dmg",
             "Long" : "{0} Melee Dmg",
             "Full" : "{0} damage with all melee attacks"
         },
         {
+            "Bonus" : "MeleeStabilityDamage",
+            "Short" : "{0} Stb. Dmg",
+            "Long" : "{0} Melee Stb Dmg",
+            "Full" : "{0} stability damage with all melee attacks"
+        },
+        {
             "Bonus" : "CarryCapacity",
-            "Short" : "{0} Carry Cap.",
+            "Short" : "{0} Carry Cap",
             "Long" : "{0} Carry Capacity",
-            "Full" : "{0} carry capacity of the BattleMech"
+            "Full" : "{0} carry capacity for the BattleMech"
+        },
+        {
+            "Bonus" : "CarryHandCapacityPercent",
+            "Short" : "{0} % Cap (Arm)",
+            "Long" : "{0} % Carry Cap (Arm)",
+            "Full" : "{0} % of chassis tonnage as arm carry capacity"
+        },
+        {
+            "Bonus" : "CarryHandUsage",
+            "Short" : "{0} ton (Arm)",
+            "Long" : "{0} ton (Arm)",
+            "Full" : "{0} ton carry capacity used up on the arm"
         },
         {
             "Bonus" : "CoolingSystem",

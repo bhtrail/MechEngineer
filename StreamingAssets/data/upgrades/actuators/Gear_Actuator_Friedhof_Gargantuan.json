@@ -1,0 +1,20 @@
+{
+    "Custom" : {
+        "Category" : { "CategoryID" : "HandHeld" },
+        "BonusDescriptions": [
+            "MeleeStabilityDamage: + 50",
+            "CarryHandUsage: 5"
+        ],
+        "StatusEffects": [
+            "StatusEffect-Attack_DamageStabMelee-T{amt}: 50"
+        ],
+        "CarryHandUsage" : 5
+    },
+    "Description" : {
+        "UIName" : "Mace + + + +",
+        "Icon" : "UixSvgIcon_specialEquip_Melee"
+    },
+    "InventorySize" : 6,
+    "Tonnage" : 2,
+    "statusEffects" : null
+}

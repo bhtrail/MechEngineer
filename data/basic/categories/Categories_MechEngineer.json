@@ -565,11 +565,31 @@
             "DefaultCustoms": {
                 "InventorySorter": "ActuatorArm3",
                 "Sorter": 3,
-                "CarryCapacityOnArmChassisFactor": 0.05,
+                "CarryHandCapacityChassisFactor": 0.05,
                 "CriticalEffects": {
                     "DestroyedFloatieMessage": "Actuator DESTROYED",
                     "OnDestroyedEffectIDs": [ "CriticalEffect-ArmHandActuatorDestroyed-{location}" ]
                 }
+            }
+        },
+        {
+            "Name": "HandHeld",
+            "DisplayName": "Hand Held",
+            "BaseLimits": [
+                {
+                    "Location": "RightArm",
+                    "Min": 0,
+                    "Max": 1
+                },
+                {
+                    "Location": "LeftArm",
+                    "Min": 0,
+                    "Max": 1
+                }
+            ],
+            "DefaultCustoms": {
+                "InventorySorter": "ActuatorArm4",
+                "Sorter": 4
             }
         }
     ]
