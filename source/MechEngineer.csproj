@@ -1,10 +1,18 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Condition="'$(MechEngineerModPath)' == ''">
-    <MechEngineerModPath>$(SolutionDir)</MechEngineerModPath>
+﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="ValidateBattleTechGameDir">
+  <Target Name="ValidateBattleTechGameDir" Condition="'$(BattleTechGameDir)' == '' Or !Exists('$(BattleTechGameDir)')">
+    <Error Text="BattleTechGameDir variable not set properly"/>
+  </Target>
+  <PropertyGroup Condition="'$(MechEngineerModPath)' == '' And Exists('$(BattleTechGameDir)\Mods\Core\MechEngineer')">
+    <!-- RogueTech -->
+    <MechEngineerModPath>$(BattleTechGameDir)\Mods\Core\MechEngineer</MechEngineerModPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(CustomComponentsModPath)' == ''">
-    <CustomComponentsModPath>..\..\CustomComponents</CustomComponentsModPath>
+  <PropertyGroup Condition="'$(MechEngineerModPath)' == '' And Exists('$(BattleTechGameDir)\Mods\MechEngineer')">
+    <!-- flat dir -->
+    <MechEngineerModPath>$(BattleTechGameDir)\Mods\MechEngineer</MechEngineerModPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MechEngineerModPath)' == ''">
+    <!-- sources dir -->
+    <MechEngineerModPath>$(SolutionDir)</MechEngineerModPath>
   </PropertyGroup>
   <PropertyGroup>
     <OutputType>Library</OutputType>
@@ -13,20 +21,22 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <ReferencePath>
-      $(BattleTechGameDir)\BattleTech_Data\Managed\publicized;
+    <AssemblySearchPaths>
+      $(ReferencePath);
+      $(BattleTechGameDir)\Mods\.modtek\AssembliesPublicized;
       $(BattleTechGameDir)\BattleTech_Data\Managed;
-      $(CustomComponentsModPath);
-    </ReferencePath>
-    <AssemblySearchPaths>$(ReferencePath)</AssemblySearchPaths>
+      {HintPathFromItem}
+    </AssemblySearchPaths>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <Target Name="CopyDLLtoModDir" AfterTargets="AfterBuild">
+  <Target Name="CopyFilesToGame" AfterTargets="CopyFilesToOutputDirectory">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MechEngineerModPath)" />
   </Target>
   <ItemGroup>
     <Reference Include="CustomComponents">
+      <!-- relative to ME -->
+      <HintPath>$(MechEngineerModPath)\..\CustomComponents\CustomComponents.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
