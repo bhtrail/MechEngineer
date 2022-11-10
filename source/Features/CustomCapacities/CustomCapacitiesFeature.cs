@@ -20,6 +20,7 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
     {
         var ccValidation = new CCValidationAdapter(this);
         Validator.RegisterMechValidator(ccValidation.ValidateMech, ccValidation.ValidateMechCanBeFielded);
+        Settings.Complete();
     }
 
     internal void CalculateCustomCapacityResults(
@@ -39,26 +40,58 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
             var context = CalculateCarryWeight(mechDef);
             capacity = context.TotalCapacity;
             usage = context.TotalUsage;
-            hasError = context.IsMechOverweight || context.IsHandOverweight || context.IsHandMissingFreeHand;
+            hasError = context.IsHandOverweight || context.IsHandMissingFreeHand || context.IsLeftOverMissing;
             description = new(customCapacity.Description);
-            string ReqString(MinHandReq req)
+            bool ReqString(MinHandReq req, out string? text)
             {
-                return req switch
+                text = req switch
                 {
-                    MinHandReq.None => "",
+                    MinHandReq.None => null,
                     MinHandReq.One => "one-handed",
                     MinHandReq.Two => "two-handed req.",
                     _ => throw new ArgumentOutOfRangeException()
                 };
+                return text != null;
             }
+            void WeightErrorColor(bool condition, out string prefix, out string postfix)
+            {
+                if (condition)
+                {
+                    prefix = "<color=#F04228FF>";
+                    postfix = "</color>";
+                }
+                else
+                {
+                    prefix = "";
+                    postfix = "";
+                }
+            }
+            WeightErrorColor(context.IsHandOverweight, out var thPre, out var thPost);
+            WeightErrorColor(context.IsLeftHandOverweight && context.IsHandMissingFreeHand, out var lhPre, out var lhPost);
+            WeightErrorColor(context.IsRightHandOverweight && context.IsHandMissingFreeHand, out var rhPre, out var rhPost);
+            WeightErrorColor(context.IsLeftOverMissing, out var loPre, out var loPost);
+
             description.Details +=
                 $"\r\n" +
-                (context.HasSharedTopOffCapacity ? $"\r\n<i>Shared</i>   usage <b>{context.SharedTopOffUsage:0.##} / {context.SharedTopOffCapacity:0.###}</b>" : "") +
-                (context.HasMechUsageOrCapacity ? $"\r\n<i>Mech</i>   usage <b>{context.MechUsage:0.##} / {context.MechCapacity:0.###}</b>" : "") +
-                $"\r\n<i>HandHeld</i>" +
-                $"\r\n   <i>Total</i>   usage <b>{context.HandTotalUsage:0.###} / {context.HandTotalCapacity:0.###}</b>" +
-                $"\r\n   <i>Left</i>    usage <b>{context.HandLeftUsage:0.###} / {context.HandLeftCapacity:0.###}</b>   <b>{ReqString(context.LeftHandReq)}</b>" +
-                $"\r\n   <i>Right</i>   usage <b>{context.HandRightUsage:0.###} / {context.HandRightCapacity:0.###}</b>   <b>{ReqString(context.RightHandReq)}</b>";
+                $"\r\n<i>Total</i>" +
+                $"\r\n  usage {thPre}<b>{context.HandTotalUsage:0.###} / {context.HandTotalCapacity:0.###}</b>{thPost}" +
+                $"\r\n" +
+                $"\r\n<i>Left Hand</i>" +
+                $"\r\n  usage {lhPre}<b>{context.HandLeftUsage:0.###} / {context.HandLeftCapacity:0.###}</b>{lhPost}" +
+                (ReqString(context.LeftHandReq, out var leftHandReqText) ?
+                $"\r\n  {leftHandReqText}"
+                : "") +
+                $"\r\n" +
+                $"\r\n<i>Right Hand</i>" +
+                $"\r\n  usage {rhPre}<b>{context.HandRightUsage:0.###} / {context.HandRightCapacity:0.###}</b>{rhPost}" +
+                (ReqString(context.RightHandReq, out var rightHandReqText) ?
+                $"\r\n  {rightHandReqText}"
+                : "") +
+                $"\r\n" +
+                (context.HasLeftOverTopOff ?
+                $"\r\n<i>Left Over</i>" +
+                $"\r\n  usage {loPre}<b>{context.LeftOverUsage:0.##} / {context.LeftOverCapacity:0.###}</b>{loPost}"
+                : "");
         }
         else
         {
@@ -79,7 +112,28 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
 
     public void ValidateMech(MechDef mechDef, Errors errors)
     {
-        ValidateCarryWeight(mechDef, errors);
+        foreach (var customCapacity in Settings.AllCapacities)
+        {
+            if (customCapacity == Shared.Settings.CarryWeight)
+            {
+                ValidateCarryWeight(mechDef, errors);
+            }
+            else
+            {
+                CalculateCapacity(
+                    mechDef,
+                    customCapacity.Description.Id,
+                    ChassisLocations.All,
+                    out var capacity,
+                    out var usage
+                );
+                var hasError = PrecisionUtils.SmallerThan(capacity, usage);
+                if (hasError)
+                {
+                    errors.Add(MechValidationType.InvalidInventorySlots, customCapacity.ErrorOverweight);
+                }
+            }
+        }
     }
 
     // Carry Capacity - TacOps p.92
@@ -88,80 +142,72 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
     {
         var context = CalculateCarryWeight(mechDef);
 
-        if (context.IsHandOverweight)
+        if (context.IsHandOverweight || context.IsLeftOverMissing)
         {
-            errors.Add(MechValidationType.Overweight, Settings.CarryHandErrorOverweight);
+            errors.Add(MechValidationType.Overweight, Settings.CarryWeight!.ErrorOverweight);
         }
         else if (context.IsHandMissingFreeHand)
         {
             errors.Add(MechValidationType.Overweight, Settings.CarryHandErrorOneFreeHand);
-        }
-        else if (context.IsMechOverweight)
-        {
-            errors.Add(MechValidationType.Overweight, Settings.CarryWeight.ErrorOverweight);
         }
     }
 
     private CarryContext CalculateCarryWeight(MechDef mechDef)
     {
         var context = new CarryContext();
-        CalculateSharedTopOff(mechDef, context);
-        CalculateCarryMech(mechDef, context);
-        CalculateCarryHand(mechDef, context);
+        CalculateCarryInHand(mechDef, context);
+        CalculateCarryLeftOver(mechDef, context);
         return context;
     }
 
-    private void CalculateSharedTopOff(MechDef mechDef, CarryContext context)
+    private void CalculateCarryLeftOver(MechDef mechDef, CarryContext context)
     {
-        bool HasHandActuator(ChassisLocations location)
-        {
-            return mechDef.Inventory.Any(x => x.MountedLocation == location && x.GetCategory(Settings.CarrySharedTopOffHandCategoryID) != null);
-        }
-        context.HasLeftHandActuator = HasHandActuator(ChassisLocations.LeftArm);
-        context.HasRightHandActuator = HasHandActuator(ChassisLocations.RightArm);
-
         CalculateCapacity(
             mechDef,
-            CarrySharedTopOffCollectionId,
+            CarryLeftOverTopOffCollectionId,
             ChassisLocations.All,
-            out context.SharedTopOffCapacity,
+            out context.LeftOverTopOff,
             out _,
-            Settings.CarrySharedTopOff * mechDef.Chassis.Tonnage);
-    }
+            Settings.CarryLeftOverTopOff * mechDef.Chassis.Tonnage
+        );
 
-    private static void CalculateCarryMech(MechDef mechDef, CarryContext context)
-    {
         CalculateCapacity(
             mechDef,
-            CarryOnMechCollectionId,
+            CarryLeftOverCollectionId,
             ChassisLocations.All,
-            out context.StatMechCapacity,
-            out context.StatMechUsage);
+            out context.LeftOverCapacity,
+            out context.LeftOverUsage,
+            Mathf.Max(0, context.LeftOverTopOff - context.HandTotalUsage),
+            context
+        );
     }
 
-    private static void CalculateCarryHand(MechDef mechDef, CarryContext context)
+    private static void CalculateCarryInHand(MechDef mechDef, CarryContext context)
     {
         CalculateCapacity(
             mechDef,
             CarryInHandCollectionId,
             ChassisLocations.LeftArm,
-            out context.StatHandLeftCapacity,
-            out context.StatHandLeftUsage
+            out context.HandLeftCapacity,
+            out context.HandLeftUsage
         );
 
         CalculateCapacity(
             mechDef,
             CarryInHandCollectionId,
             ChassisLocations.RightArm,
-            out context.StatHandRightCapacity,
-            out context.StatHandRightUsage
+            out context.HandRightCapacity,
+            out context.HandRightUsage
         );
     }
 
     private class CarryContext
     {
         internal bool IsHandOverweight => PrecisionUtils.SmallerThan(HandTotalCapacity, HandTotalUsage);
-        internal bool IsMechOverweight => PrecisionUtils.SmallerThan(MechCapacity, MechUsage);
+        internal bool IsLeftOverMissing => PrecisionUtils.SmallerThan(LeftOverCapacity, LeftOverUsage);
+
+        internal bool IsLeftHandOverweight => PrecisionUtils.SmallerThan(HandLeftCapacity, HandLeftUsage);
+        internal bool IsRightHandOverweight => PrecisionUtils.SmallerThan(HandRightCapacity, HandRightUsage);
 
         internal bool IsHandMissingFreeHand =>
             (LeftHandReq == MinHandReq.Two && RightHandReq != MinHandReq.None)
@@ -183,59 +229,23 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
             return MinHandReq.None;
         }
 
-        internal float TotalCapacity => MechCapacity + HandTotalCapacity + LeftOverSharedTopOffCapacity;
-        internal float TotalUsage => MechUsage + HandTotalUsage;
+        internal float TotalCapacity => LeftOverTopOff > HandTotalCapacity ? LeftOverTopOff : HandTotalCapacity;
+        internal float TotalUsage => HandTotalUsage + LeftOverUsage;
 
         internal float HandTotalCapacity => HandLeftCapacity + HandRightCapacity;
         internal float HandTotalUsage => HandLeftUsage + HandRightUsage;
 
-        internal float HandLeftCapacity => TopOffHandLeftCapacity + StatHandLeftCapacity;
-        internal float HandLeftUsage => StatHandLeftUsage;
+        internal float HandLeftCapacity;
+        internal float HandLeftUsage;
 
-        internal float HandRightCapacity => TopOffHandRightCapacity + StatHandRightCapacity;
-        internal float HandRightUsage => StatHandRightUsage;
+        internal float HandRightCapacity;
+        internal float HandRightUsage;
 
-        internal bool HasMechUsageOrCapacity => !PrecisionUtils.Equals(0, MechCapacity) || !PrecisionUtils.Equals(0, MechUsage);
+        internal bool HasLeftOverTopOff => !PrecisionUtils.Equals(0, LeftOverTopOff);
 
-        internal float MechCapacity => TopOffMechCapacity + StatMechCapacity;
-        internal float MechUsage => StatMechUsage;
-
-        #region TopOff
-
-        internal float SharedTopOffUsage => TopOffHandLeftCapacity + TopOffHandRightCapacity + TopOffMechCapacity;
-
-        private float TopOffHandLeftCapacity => HasLeftHandActuator ? TopOffHandLeftCapacityIfHand : 0;
-        private float TopOffHandLeftCapacityIfHand => Mathf.Min(TopOffHandLeftCapacityPotential, HandLeftCapacityMissing);
-        private float TopOffHandLeftCapacityPotential => SharedTopOffCapacity / 2;
-        private float HandLeftCapacityMissing => Mathf.Max(0, StatHandLeftUsage - StatHandLeftCapacity);
-
-        private float TopOffHandRightCapacity => HasRightHandActuator ? TopOffHandRightCapacityIfHand : 0;
-        private float TopOffHandRightCapacityIfHand => Mathf.Min(TopOffHandRightCapacityPotential, HandRightCapacityMissing);
-        private float TopOffHandRightCapacityPotential => Mathf.Min(SharedTopOffCapacity / 2, SharedMinCapacityAfterLeftHand);
-        private float HandRightCapacityMissing => Mathf.Max(0, StatHandRightUsage - StatHandRightCapacity);
-        private float SharedMinCapacityAfterLeftHand => SharedTopOffCapacity - TopOffHandLeftCapacity;
-
-        private float TopOffMechCapacity => Mathf.Min(SharedMinCapacityAfterRightHand, MechCapacityMissing);
-        private float MechCapacityMissing => Mathf.Max(0, StatMechUsage - StatMechCapacity);
-        private float SharedMinCapacityAfterRightHand => SharedMinCapacityAfterLeftHand - TopOffHandRightCapacity;
-
-        private float LeftOverSharedTopOffCapacity => SharedMinCapacityAfterRightHand - TopOffMechCapacity;
-        internal bool HasSharedTopOffCapacity => !PrecisionUtils.Equals(0, SharedTopOffCapacity);
-
-        internal float SharedTopOffCapacity;
-        internal bool HasLeftHandActuator;
-        internal bool HasRightHandActuator;
-
-        #endregion
-
-        internal float StatHandLeftCapacity;
-        internal float StatHandLeftUsage;
-
-        internal float StatHandRightCapacity;
-        internal float StatHandRightUsage;
-
-        internal float StatMechCapacity;
-        internal float StatMechUsage;
+        internal float LeftOverTopOff;
+        internal float LeftOverCapacity;
+        internal float LeftOverUsage;
     }
 
     private enum MinHandReq
@@ -245,11 +255,13 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
         Two
     }
 
+    internal const string HeatSinkCollectionId = "HeatSink";
+    internal const string HeatSinkEngineAdditionalCollectionId = "HeatSinkEngineAdditional";
     internal const string CarryInHandCollectionId = "CarryInHand";
-    internal const string CarryOnMechCollectionId = "CarryOnMech";
-    internal const string CarrySharedTopOffCollectionId = "CarrySharedTopOff";
+    internal const string CarryLeftOverCollectionId = "CarryLeftOver";
+    internal const string CarryLeftOverTopOffCollectionId = "CarryLeftOverTopOff";
 
-    private static void CalculateCapacity(MechDef mechDef, string collectionId, ChassisLocations location, out float capacity, out float usage, float initialCapacity = 0)
+    private static void CalculateCapacity(MechDef mechDef, string collectionId, ChassisLocations location, out float capacity, out float usage, float initialCapacity = 0, CarryContext? context = null)
     {
         var mods = mechDef.Inventory
             .SelectMany(r =>
@@ -257,15 +269,19 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
                 .Where(mod => mod.Collection == collectionId)
                 .Where(mod => !mod.IsLocationRestricted || (r.MountedLocation & location) != ChassisLocations.None)
             )
-            .OrderBy(m => m.Priority)
+            .OrderBy(m => m.IsUsage)
+            .ThenBy(m => m.Priority)
             .ThenBy(m => m.Operation)
             .ToList();
 
+        var quantityCapacityFactor = 0f;
         float ApplyOperation(float previous, CapacityModCustom mod)
         {
             var factor = mod.QuantityFactorType switch
             {
                 QuantityFactorType.One => 1f,
+                QuantityFactorType.Capacity => quantityCapacityFactor,
+                QuantityFactorType.CarryLeftOverTopOff => context!.LeftOverTopOff,
                 QuantityFactorType.ChassisTonnage => mechDef.Chassis.Tonnage,
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -282,6 +298,7 @@ internal class CustomCapacitiesFeature : Feature<CustomCapacitiesSettings>, IVal
         capacity = mods
             .Where(m => !m.IsUsage)
             .Aggregate(initialCapacity, ApplyOperation);
+        quantityCapacityFactor = capacity;
 
         usage = mods
             .Where(m => m.IsUsage)

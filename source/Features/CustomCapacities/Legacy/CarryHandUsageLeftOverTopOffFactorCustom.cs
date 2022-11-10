@@ -3,8 +3,8 @@ using CustomComponents;
 
 namespace MechEngineer.Features.CustomCapacities.Legacy;
 
-[CustomComponent("CarryMechUsage")]
-public class CarryMechUsageCustom : SimpleCustomComponent, IValueComponent<float>, IAfterLoad
+[CustomComponent("CarryHandUsageLeftOverTopOffFactor")]
+public class CarryHandUsageLeftOverTopOffFactorCustom : SimpleCustomComponent, IValueComponent<float>, IAfterLoad
 {
     private float Value;
 
@@ -17,9 +17,11 @@ public class CarryMechUsageCustom : SimpleCustomComponent, IValueComponent<float
     {
         Def.AddComponent(new CapacityModCustom
             {
-                Collection = CustomCapacitiesFeature.CarryOnMechCollectionId,
+                Collection = CustomCapacitiesFeature.CarryInHandCollectionId,
+                IsLocationRestricted = true,
                 IsUsage = true,
-                Quantity = Value
+                Quantity = Value,
+                QuantityFactorType = QuantityFactorType.CarryLeftOverTopOff,
             }
         );
     }

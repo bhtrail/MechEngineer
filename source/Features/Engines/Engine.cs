@@ -4,14 +4,15 @@ using BattleTech;
 using CustomComponents;
 using MechEngineer.Features.Engines.Helper;
 using MechEngineer.Features.OverrideTonnage;
+using MechEngineer.Misc;
 using UnityEngine;
 
 namespace MechEngineer.Features.Engines;
 
-// Declared public to have access from BattleValue module -- bhtrail
+[UsedBy(User.BattleValue)]
 public class Engine
 {
-    // Declared public to have access from BattleValue module -- bhtrail
+    [UsedBy(User.BattleValue)]
     public static Engine? GetEngine(ChassisDef chassisDef, IList<MechComponentRef> componentRefs)
     {
         var result = EngineSearcher.SearchInventory(componentRefs);
@@ -53,7 +54,7 @@ public class Engine
     }
 
     private CoolingDef _coolingDef = null!;
-    // Declared public to have access from BattleValue module -- bhtrail
+    [UsedBy(User.BattleValue)]
     public CoolingDef CoolingDef
     {
         get => _coolingDef;
@@ -65,15 +66,15 @@ public class Engine
             HeatSinkDef = def.GetComponent<EngineHeatSinkDef>();
         }
     }
-    // Declared public to have access from BattleValue module -- bhtrail
     // type of internal heat sinks and compatible external heat sinks
+    [UsedBy(User.BattleValue)]
     public EngineHeatSinkDef HeatSinkDef { get; set; } = null!;
 
-    // Declared public to have access from BattleValue module -- bhtrail
     // amount of internal heat sinks
+    [UsedBy(User.BattleValue)]
     public EngineHeatBlockDef HeatBlockDef { get; set; }
 
-    // Declared public to have access from BattleValue module -- bhtrail
+    [UsedBy(User.BattleValue)]
     public EngineCoreDef CoreDef { get; set; }
     public WeightFactors WeightFactors { get; set; }
     // Declared public to have access from BattleValue module -- bhtrail
@@ -90,7 +91,7 @@ public class Engine
         return heatSinks.Select(r => r.Def).Count(d => d == heatSinkDef);
     }
 
-    // Declared public to have access from BattleValue module -- bhtrail
+    [UsedBy(User.BattleValue)]
     public float EngineHeatDissipation
     {
         get
@@ -107,24 +108,15 @@ public class Engine
     internal int HeatSinkExternalFreeCount => Mathf.Min(HeatSinkExternalCount, HeatSinkExternalFreeMaxCount);
     internal int HeatSinkExternalAdditionalCount => HeatSinkExternalCount - HeatSinkExternalFreeCount;
 
-    private int HeatSinkTotalCount => HeatSinkInternalCount + HeatSinkExternalCount;
+    internal int HeatSinkTotalCount => HeatSinkInternalCount + HeatSinkExternalCount;
     internal int HeatSinkInternalCount => HeatSinkInternalFreeMaxCount + HeatBlockDef.HeatSinkCount;
 
-    private int HeatSinksFreeMaxCount => EngineFeature.settings.MinimumHeatSinksOnMech;
+    private int HeatSinksFreeMaxCount => EngineFeature.settings.HeatSinksMaximumFreeCount;
     private int HeatSinksInternalMaxCount => CoreDef.Rating / 25;
-
-    protected virtual int HeatSinkTotalMinCount => HeatSinksFreeMaxCount;
 
     internal virtual int HeatSinkInternalFreeMaxCount => Mathf.Min(HeatSinksFreeMaxCount, HeatSinksInternalMaxCount);
     internal virtual int HeatSinkInternalAdditionalMaxCount => Mathf.Max(0, HeatSinksInternalMaxCount - HeatSinksFreeMaxCount);
     internal virtual int HeatSinkExternalFreeMaxCount => HeatSinksFreeMaxCount - HeatSinkInternalFreeMaxCount;
-
-    internal bool IsMissingHeatSinks(out int min, out int count)
-    {
-        min = HeatSinkTotalMinCount;
-        count = HeatSinkTotalCount;
-        return count < min;
-    }
 
     #endregion
 
@@ -149,8 +141,6 @@ internal class ProtoMechEngine : Engine
     internal ProtoMechEngine(EngineSearcher.Result result) : base(result)
     {
     }
-
-    protected override int HeatSinkTotalMinCount => 0;
 
     internal override int HeatSinkInternalFreeMaxCount => 0;
     internal override int HeatSinkInternalAdditionalMaxCount => 0;

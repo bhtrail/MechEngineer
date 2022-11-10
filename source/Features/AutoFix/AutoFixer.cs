@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using BattleTech;
 using CustomComponents;
+using MechEngineer.Features.ArmorMaximizer;
+using MechEngineer.Features.ArmorMaximizer.Maximizer;
 using MechEngineer.Features.ArmorStructureRatio;
 using MechEngineer.Features.DynamicSlots;
 using MechEngineer.Features.Engines;
@@ -119,11 +122,11 @@ internal class AutoFixer : IAutoFixMechDef
 
         var engineHeatSinkDef = dataManager.HeatSinkDefs.Get(res.CoolingDef.HeatSinkDefId).GetComponent<EngineHeatSinkDef>();
 
-        if (!EngineFeature.settings.AllowMixingHeatSinkTypes)
+        if (!EngineFeature.settings.KeepIncompatibleHeatSinks)
         {
             // remove incompatible heat sinks
             var incompatibleHeatSinks = builder.Inventory
-                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory != engineHeatSinkDef.HeatSinkCategory)
+                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs != engineHeatSinkDef)
                 .ToList();
 
             foreach (var incompatibleHeatSink in incompatibleHeatSinks)
@@ -150,7 +153,7 @@ internal class AutoFixer : IAutoFixMechDef
                 var current = oldCurrent;
 
                 var heatSinks = builder.Inventory
-                    .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory)
+                    .Where(r => r.Def.Is<EngineHeatSinkDef>())
                     .ToList();
 
                 while (current < max && heatSinks.Count > 0)
@@ -180,13 +183,13 @@ internal class AutoFixer : IAutoFixMechDef
         else
         {
             Control.Logger.Debug?.Log(" Finding engine");
-            var freeTonnage = Weights.CalculateFreeTonnage(mechDef);
+            var freeTonnage = CalculateFreeTonnage(mechDef);
 
             var jumpJets = builder.Inventory.Where(x => x.ComponentDefType == ComponentType.JumpJet).ToList();
             var jumpJetTonnage = jumpJets.Select(x => x.Def.Tonnage).FirstOrDefault(); //0 if no jjs
 
             var externalHeatSinks = builder.Inventory
-                .Where(r => r.Def.Is<EngineHeatSinkDef>(out var hs) && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory)
+                .Where(r => r.Def.Is<EngineHeatSinkDef>())
                 .ToList();
             var internalHeatSinksCount = res.HeatBlockDef.HeatSinkCount;
 
@@ -330,9 +333,7 @@ internal class AutoFixer : IAutoFixMechDef
         // add free heat sinks
         {
             var max = engine.HeatSinkExternalFreeMaxCount;
-            var current = builder.Inventory
-                .Count(r => r.Def.Is<EngineHeatSinkDef>(out var hs)
-                            && hs.HeatSinkCategory == engineHeatSinkDef.HeatSinkCategory);
+            var current = builder.Inventory.Count(r => r.Def.Is<EngineHeatSinkDef>());
             for (var i = current; i < max; i++)
             {
                 builder.Add(engineHeatSinkDef.Def, ChassisLocations.Head, true);
@@ -373,16 +374,8 @@ internal class AutoFixer : IAutoFixMechDef
         mechDef.SetInventory(builder.Inventory.ToArray());
 
         {
-            var freeTonnage = Weights.CalculateFreeTonnage(mechDef);
-            if (PrecisionUtils.Equals(freeTonnage, 0))
-            {
-                // do nothing
-            }
-            else if (freeTonnage > 0)
-            {
-                // TODO add armor for each location with free tonnage left
-            }
-            else if (freeTonnage < 0)
+            var freeTonnage = CalculateFreeTonnage(mechDef);
+            if (freeTonnage < 0)
             {
                 Control.Logger.Debug?.Log($" Found over tonnage {-freeTonnage}");
                 var removableItems = builder.Inventory
@@ -405,10 +398,43 @@ internal class AutoFixer : IAutoFixMechDef
                     builder.Remove(item);
                     Control.Logger.Debug?.Log($"  Removed item, freeTonnage={freeTonnage}");
                 }
+
+                mechDef.SetInventory(builder.Inventory.ToArray());
             }
         }
 
-        mechDef.SetInventory(builder.Inventory.ToArray());
+        if (AutoFixerFeature.Shared.Settings.MaximizeArmor)
+        {
+            sw.Start();
+            if (MechArmorState.Maximize(mechDef, true, 5, out var updates))
+            {
+                foreach (var update in updates)
+                {
+                    var chassisLocation = MechStructureRules.GetChassisLocationFromArmorLocation(update.Location);
+                    var locationDef = mechDef.GetLocationLoadoutDef(chassisLocation);
+                    if (update.Location.IsRear())
+                    {
+                        locationDef.CurrentRearArmor = locationDef.AssignedRearArmor = update.Assigned;
+                    }
+                    else
+                    {
+                        locationDef.CurrentArmor = locationDef.AssignedArmor = update.Assigned;
+                    }
+                    Control.Logger.Trace?.Log($"OnMaxArmor.SetArmor update={update}");
+                }
+            }
+            sw.Stop();
+            Control.Logger.Debug?.Log($"Autofixer MechArmorState.Maximize took {sw.Elapsed}");
+        }
+    }
+
+    private static readonly Stopwatch sw = new();
+
+    private static float CalculateFreeTonnage(MechDef mechDef)
+    {
+        var weights = new Weights(mechDef);
+        Control.Logger.Debug?.Log($"Chassis={mechDef.Chassis.Description.Id} weights={weights}");
+        return weights.FreeWeight;
     }
 
     private static bool IsMovable(MechComponentRef c)

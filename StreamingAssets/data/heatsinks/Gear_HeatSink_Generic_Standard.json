@@ -1,9 +1,10 @@
 {
 	"Custom": {
+        "Category": { "CategoryID" : "HeatSink" },
+        "HeatSinkCapacity": 1,
 		"EngineHeatSink": {
 			"FullName": "Standard Heat Sinks",
-			"Abbreviation": "SHS",
-			"Tag": "SHS"
+			"Abbreviation": "SHS"
 		}
-	},
+	}
 }

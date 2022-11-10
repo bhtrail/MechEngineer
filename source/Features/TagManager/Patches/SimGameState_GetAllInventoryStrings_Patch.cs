@@ -12,7 +12,7 @@ public static class SimGameState_GetAllInventoryStrings_Patch
     [UsedByHarmony]
     public static bool Prepare()
     {
-        return TagManagerFeature.Shared.Settings.SimGameItemsMinCount != null;
+        return TagManagerFeature.Shared.Settings.SimGameItemsMinCount > 0;
     }
 
     [HarmonyPrefix]
@@ -20,19 +20,15 @@ public static class SimGameState_GetAllInventoryStrings_Patch
     {
         try
         {
+            var feature = TagManagerFeature.Shared;
             var state = __instance;
-            var minCount = TagManagerFeature.Shared.Settings.SimGameItemsMinCount!;
+            var minCount = feature.Settings.SimGameItemsMinCount;
 
             void AddApplicable<T>(DictionaryStore<T> store) where T : MechComponentDef, new()
             {
                 foreach (var def in store.items.Values)
                 {
-                    var tags = def.ComponentTags;
-                    if (tags.Contains(MechValidationRules.Tag_Blacklisted))
-                    {
-                        continue;
-                    }
-                    if (!tags.ContainsAny(TagManagerFeature.Shared.Settings.SkirmishWhitelistTagSet))
+                    if (!feature.ComponentIsValidForSkirmish(def, false))
                     {
                         continue;
                     }

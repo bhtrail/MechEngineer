@@ -1,5 +1,4 @@
 ﻿using System;
-using CustomComponents;
 using HBS.Collections;
 
 namespace MechEngineer.Features.AutoFix;
@@ -14,12 +13,6 @@ internal class AutoFixerFeature : Feature<AutoFixerSettings>
 
     protected override void SetupFeatureLoaded()
     {
-        Registry.RegisterPreProcessor(CockpitHandler.Shared);
-        Registry.RegisterPreProcessor(SensorsAHandler.Shared);
-        Registry.RegisterPreProcessor(SensorsBHandler.Shared);
-        Registry.RegisterPreProcessor(GyroHandler.Shared);
-        Registry.RegisterPreProcessor(LegActuatorHandler.Shared);
-
         CustomComponents.AutoFixer.Shared.RegisterMechFixer(AutoFixer.Shared.AutoFix);
     }
 

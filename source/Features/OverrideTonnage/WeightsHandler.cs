@@ -24,7 +24,7 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
             var mechDef = Global.ActiveMechDef;
             if (mechDef != null)
             {
-                var tonnageChanges = Weights.CalculateWeightFactorsChange(mechDef, weightFactors);
+                var tonnageChanges = CalculateWeightFactorsChange(mechDef, weightFactors);
                 tooltip.tonnageText.text = FormatChanges(mechComponentDef.Tonnage, tonnageChanges);
             }
         }
@@ -50,7 +50,7 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
             var mechDef = Global.ActiveMechDef;
             if (mechDef != null)
             {
-                var tonnageChanges = Weights.CalculateWeightFactorsChange(mechDef, weightFactors);
+                var tonnageChanges = CalculateWeightFactorsChange(mechDef, weightFactors);
                 tooltip.tonnage.text = FormatChanges(mechComponentDef.Tonnage, tonnageChanges);
             }
         }
@@ -98,7 +98,7 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
             return;
         }
 
-        var tonnageChanges = Weights.CalculateWeightFactorsChange(mechDef, weightFactors);
+        var tonnageChanges = CalculateWeightFactorsChange(mechDef, weightFactors);
         if (!Mathf.Approximately(tonnageChanges, 0))
         {
             instance.bonusTextA.text = $"{FloatToText(tonnageChanges)} ton";
@@ -117,7 +117,8 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
             sign = "- ";
             number = -number;
         }
-        return $"{sign}{number:0.##}";
+
+        return sign + number.ToString(OverrideTonnageFeature.settings.MechLabComponentFormat);
     }
 
     internal static void AdjustInfoWidget(
@@ -128,7 +129,8 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
         TextMeshProUGUI remainingTonnage,
         out float currentTonnage)
     {
-        currentTonnage = Weights.CalculateTotalTonnage(mechDef);
+        var weights = new Weights(mechDef);
+        currentTonnage = weights.TotalWeight;
 
         var precisionHelper = InfoTonnageHelper.KilogramStandard;
 
@@ -166,5 +168,68 @@ internal class WeightsHandler : IAdjustTooltipEquipment, IAdjustTooltipWeapon, I
             var s = precisionHelper.IsSame(tonnageLeft, 1f) ? "s" : string.Empty;
             remainingTonnage.SetText($"{left} ton{s} remaining");
         }
+
+        var layoutTonnage = remainingTonnage.transform.parent;
+        {
+            var go = layoutTonnage.gameObject;
+            var tooltip = go.GetComponent<HBSTooltip>() ?? go.AddComponent<HBSTooltip>();
+            string Format(float value)
+            {
+                return "<b>" + value.ToString(OverrideTonnageFeature.settings.MechLabMechInfoWidgetToolTipFormat) + "</b>";
+            }
+            tooltip.defaultStateData.SetObject(new BaseDescriptionDef
+            {
+                Id = "weights",
+                Name = "Weights Summary",
+                Details =
+                    "A mech consists of a chassis which has an internal structure and an outer protective layer called armor." +
+                    " The chassis determines the maximum weight in components and armor that can be mounted." +
+                    " The technology base of a mech can provide various weight benefits." +
+                    (!PrecisionUtils.Equals(weights.Factors.ChassisFactor, 1) ?
+                    $"\r\n" +
+                    $"\r\n<i>Chassis</i>" +
+                    $"\r\n  <i>Capacity</i>" +
+                    $"\r\n    {Format(weights.ChassisWeightCapacity)}" +
+                    $"\r\n  <i>Standard Capacity</i>" +
+                    $"\r\n    {Format(weights.StandardChassisWeightCapacity)}" +
+                    $"\r\n  <i>Factor</i>" +
+                    $"\r\n    {Format(weights.Factors.ChassisFactor)}"
+                    : "") +
+                    $"\r\n" +
+                    $"\r\n<i>Armor</i>" +
+                    $"\r\n  <i>Weight</i>" +
+                    $"\r\n    {Format(weights.ArmorWeight)}" +
+                    (!PrecisionUtils.Equals(weights.Factors.ArmorFactor, 1) ?
+                    $"\r\n  <i>Standard Weight</i>" +
+                    $"\r\n    {Format(weights.StandardArmorWeight)}" +
+                    $"\r\n  <i>Factor</i>" +
+                    $"\r\n    {Format(weights.Factors.ArmorFactor)}"
+                    : "") +
+                    $"\r\n  <i>Assigned Points</i>" +
+                    $"\r\n    {Format(weights.ArmorAssignedPoints)}" +
+                    $"\r\n  <i>Points Per Ton</i>" +
+                    $"\r\n    {Format(weights.ArmorPerTon)}" +
+                    $"\r\n" +
+                    $"\r\n<i>Structure</i>" +
+                    $"\r\n  <i>Weight</i>" +
+                    $"\r\n    {Format(weights.StructureWeight)}" +
+                    (!PrecisionUtils.Equals(weights.Factors.StructureFactor, 1) ?
+                    $"\r\n  <i>Standard Weight</i>" +
+                    $"\r\n    {Format(weights.StandardStructureWeight)}" +
+                    $"\r\n  <i>Factor</i>" +
+                    $"\r\n    {Format(weights.Factors.StructureFactor)}"
+                    : ""),
+                    Icon = "uixSvgIcon_quantity"
+            });
+        }
+    }
+
+    private static float CalculateWeightFactorsChange(MechDef mechDef, WeightFactors componentFactors)
+    {
+        var weights = new Weights(mechDef, false);
+        var before = weights.TotalWeight;
+        weights.Factors.Combine(componentFactors);
+        var after = weights.TotalWeight;
+        return after - before;
     }
 }

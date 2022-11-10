@@ -9,6 +9,8 @@ log.txt
 Settings.help.json
 Settings.last.json
 Directory.Build.props
+gameobjects.txt
+mesh.txt
 
 # User-specific files
 *.suo

@@ -1,13 +1,14 @@
 {
 	"Custom": {
+        "Category": { "CategoryID" : "HeatSink" },
+        "HeatSinkCapacity": 1,
 		"EngineHeatSink": {
 			"FullName": "Double Heat Sinks",
-			"Abbreviation": "DHS",
-			"Tag": "DHS",
+			"Abbreviation": "DHS"
 		}
 	},
     "Description" : {
-        "Manufacturer" : "Lostech",
+        "Manufacturer" : "Lostech"
     },
     "ComponentTags" : {
         "items" : [

@@ -10,14 +10,14 @@ internal class EngineSettings : ISettings
     public bool AllowMountingAllRatings = false;
     public string AllowMountingAllRatingsDescription = "Allow mounting all fusion core rating regardless of min/max sprint factors.";
 
-    public int MinimumHeatSinksOnMech = 10;
-    public string MinimumHeatSinksOnMechDescription = "Minimum heatsinks a mech requires.";
+    public int HeatSinksMaximumFreeCount = 10;
+    public string HeatSinksMaximumFreeCountDescription = "Number of heat sinks mounted outside fo the engine that are allowed to be free, minus the engine-internal heat sinks.";
 
     public bool EnforceRulesForAdditionalInternalHeatSinks = true;
     public string EnforceRulesForAdditionalInternalHeatSinksDescription = "Can't have those juicy ++ cooling systems with smaller fusion cores than the rules allow it.";
 
-    public bool AllowMixingHeatSinkTypes = false;
-    public string AllowMixingHeatSinkTypesDescription = "Allow heat sinks patchwork.";
+    public bool KeepIncompatibleHeatSinks = false;
+    public string KeepIncompatibleHeatSinksDescription = "Replace incompatible heat sinks with compatible ones.";
 
     public int EngineMissingFallbackHeatSinkCapacity = 30;
     public string EngineMissingFallbackHeatSinkCapacityDescription = "Heat sink capacity if no engine is detected.";
