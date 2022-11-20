@@ -16,7 +16,7 @@ public static class MechComponent_ApplyPassiveEffectToTarget_Patch
         }
         catch (Exception e)
         {
-            Control.Logger.Error.Log(e);
+            Log.Main.Error?.Log(e);
         }
     }
 }

@@ -3,19 +3,23 @@ using BattleTech.UI;
 using BattleTech.UI.Tooltips;
 using CustomComponents;
 using MechEngineer.Features.OverrideDescriptions;
+using MechEngineer.Misc;
 
 namespace MechEngineer.Features.OverrideTonnage;
 
 [CustomComponent("Weights")]
+[UsedBy(User.BattleValue)]
 public class WeightFactors : SimpleCustomComponent, IAdjustSlotElement, IAdjustTooltipEquipment, IAdjustTooltipWeapon
 {
     public int ReservedSlots { get; set; } = 0; // TODO move to own feature... SlotsHandler or SizeHandler
     public float ArmorFactor { get; set; } = 1;
     public float StructureFactor { get; set; } = 1;
     public float EngineFactor { get; set; } = 1;
-    //public float EngineFactorFactor { get; set; } = 1;
+    //public float EngineFactorFactor { get; set; } = 1; // TODO was problematic, 1. engine, 2. engine factor, 3. engine factor factor
     public float GyroFactor { get; set; } = 1;
     public float ChassisFactor { get; set; } = 1;
+
+    public BonusSlot? BonusSlot { get; set; }
 
     public void Combine(WeightFactors savings)
     {

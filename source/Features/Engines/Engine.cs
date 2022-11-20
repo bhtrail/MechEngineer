@@ -76,8 +76,11 @@ public class Engine
 
     [UsedBy(User.BattleValue)]
     public EngineCoreDef CoreDef { get; set; }
+
+    [UsedBy(User.BattleValue)]
     public WeightFactors WeightFactors { get; set; }
-    // Declared public to have access from BattleValue module -- bhtrail
+
+    [UsedBy(User.BattleValue)]
     public List<MechComponentRef> HeatSinksExternal { get; set; }
 
     private int HeatSinkExternalCount { get; set; }

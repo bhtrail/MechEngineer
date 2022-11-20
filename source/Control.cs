@@ -4,7 +4,6 @@ using System.IO;
 using System.Reflection;
 using BattleTech;
 using MechEngineer.Features;
-using MechEngineer.Features.BetterLog;
 using MechEngineer.Misc;
 
 namespace MechEngineer;
@@ -12,7 +11,6 @@ namespace MechEngineer;
 public static class Control
 {
     internal static Mod Mod = null!;
-    internal static BetterLogger Logger = null!;
 
     internal static readonly MechEngineerSettings Settings = new();
 
@@ -37,26 +35,24 @@ public static class Control
             FileUtils.SetReadonly(Mod.SettingsLastPath, true);
         }
 
-        Logger = BetterLogFeature.SetupLog(nameof(MechEngineer), Settings.BetterLog);
-
         try
         {
-            Logger.Info?.Log($"version {Assembly.GetExecutingAssembly().GetInformationalVersion()}");
-            Logger.Info?.Log("settings loaded");
-            Logger.Debug?.Log("debugging enabled");
+            Log.Main.Info?.Log($"version {Assembly.GetExecutingAssembly().GetInformationalVersion()}");
+            Log.Main.Info?.Log("settings loaded");
+            Log.Main.Debug?.Log("debugging enabled");
 
-            Logger.Debug?.Log("setting up features");
+            Log.Main.Debug?.Log("setting up features");
 
             foreach (var feature in FeaturesList.Features)
             {
                 feature.SetupFeature();
             }
 
-            Logger.Info?.Log("started");
+            Log.Main.Info?.Log("started");
         }
         catch (Exception e)
         {
-            Logger.Error.Log("error starting", e);
+            Log.Main.Error?.Log("error starting", e);
             throw;
         }
     }
@@ -71,11 +67,11 @@ public static class Control
                 feature.SetupFeatureResources(customResources);
             }
 
-            Logger.Info?.Log("loaded");
+            Log.Main.Info?.Log("loaded");
         }
         catch (Exception e)
         {
-            Logger.Error.Log("error loading", e);
+            Log.Main.Error?.Log("error loading", e);
         }
     }
 

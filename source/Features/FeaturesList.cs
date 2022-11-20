@@ -3,7 +3,6 @@ using MechEngineer.Features.ArmorMaximizer;
 using MechEngineer.Features.ArmorStructureChanges;
 using MechEngineer.Features.ArmorStructureRatio;
 using MechEngineer.Features.AutoFix;
-using MechEngineer.Features.BetterLog;
 using MechEngineer.Features.ComponentExplosions;
 using MechEngineer.Features.CompressFloatieMessages;
 using MechEngineer.Features.CriticalEffects;
@@ -28,7 +27,6 @@ using MechEngineer.Features.OverrideTonnage;
 using MechEngineer.Features.Performance;
 using MechEngineer.Features.PlaceholderEffects;
 using MechEngineer.Features.ShutdownInjuryProtection;
-using MechEngineer.Features.TagManager;
 using MechEngineer.Features.TurretLimitedAmmo;
 using MechEngineer.Features.TurretMechComponents;
 
@@ -39,7 +37,6 @@ internal static class FeaturesList
     // order matters, dependencies between "Features" are encoded into the order
     internal static readonly IFeature[] Features =
     {
-        BetterLogFeature.Shared,
         OrderedStatusEffectsFeature.Shared,
         OverrideTonnageFeature.Shared,
         CustomCapacitiesFeature.Shared,
@@ -66,7 +63,6 @@ internal static class FeaturesList
         TurretMechComponentsFeature.Shared,
         TurretLimitedAmmoFeature.Shared,
         OverrideGhostVFXFeature.Shared,
-        TagManagerFeature.Shared,
         OverrideStatTooltipsFeature.Shared,
         PerformanceFeature.Shared,
         DebugSaveMechToFileFeature.Shared,

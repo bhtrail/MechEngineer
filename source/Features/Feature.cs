@@ -69,7 +69,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
             var type = feature.GetType();
             var topic = type.Name;
             var enabled = feature.Enabled;
-            Control.Logger.Debug?.Log($"{topic} setting up (Enabled={enabled} Namespace={type.Namespace})");
+            Log.Main.Debug?.Log($"{topic} setting up (Enabled={enabled} Namespace={type.Namespace})");
             if (enabled)
             {
                 var typesInNamespace = FindTypesInNamespace(type).ToList();
@@ -79,7 +79,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
                 }
                 catch (Exception e)
                 {
-                    Control.Logger.Warning?.Log($"{topic} failed patching", e);
+                    Log.Main.Warning?.Log($"{topic} failed patching", e);
                     return false;
                 }
 
@@ -89,15 +89,15 @@ internal abstract class Feature<T> : IFeature where T : ISettings
                 }
                 catch (Exception e)
                 {
-                    Control.Logger.Warning?.Log($"{topic} failed registering customs", e);
+                    Log.Main.Warning?.Log($"{topic} failed registering customs", e);
                     return false;
                 }
 
-                Control.Logger.Info?.Log($"{topic} enabled");
+                Log.Main.Info?.Log($"{topic} enabled");
             }
             else
             {
-                Control.Logger.Info?.Log($"{topic} disabled");
+                Log.Main.Info?.Log($"{topic} disabled");
             }
 
             return enabled;
@@ -127,7 +127,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
 
             foreach (var type in types)
             {
-                Control.Logger.Debug?.Log($" Custom {type.Name}");
+                Log.Main.Debug?.Log($" Custom {type.Name}");
                 Registry.RegisterSimpleCustomComponents(type);
             }
         }
@@ -164,7 +164,7 @@ internal abstract class Feature<T> : IFeature where T : ISettings
             {
                 try
                 {
-                    Control.Logger.Debug?.Log($" Patch {type.Name}");
+                    Log.Main.Debug?.Log($" Patch {type.Name}");
                     var hook = Patch(harmony, type);
                     hooks.Add(hook);
                 }

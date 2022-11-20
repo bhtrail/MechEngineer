@@ -16,7 +16,7 @@ public static class StatTooltipData_SetMovementData_Patch
         }
         catch (Exception e)
         {
-            Control.Logger.Error.Log(e);
+            Log.Main.Error?.Log(e);
         }
     }
 }

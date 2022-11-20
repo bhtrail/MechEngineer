@@ -17,15 +17,15 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>net472</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
+    <LangVersion>11</LangVersion>
     <AssemblySearchPaths>
       $(ReferencePath);
       {HintPathFromItem};
       $(BattleTechGameDir)\BattleTech_Data\Managed
     </AssemblySearchPaths>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <Target Name="CopyFilesToGame" AfterTargets="CopyFilesToOutputDirectory">
@@ -82,17 +82,21 @@
     <Reference Include="UnityEngine.TextRenderingModule">
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine.UI">
+    <Reference Include="UnityEngine.UI" Publicize="true">
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\*.json" />
+    <None Include="..\advancedjsonmerge\loglevels.json" />
+    <None Include="$(BattleTechGameDir)\Mods\.modtek\battletech_log.txt" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="GitVersion.MsBuild" Version="5.10.1">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None LinkBase=".modtek" Include="$(BattleTechGameDir)\Mods\.modtek\battletech_*" />
-    <None LinkBase=".modpath" Include="$(MechEngineerModPath)\*.json" />
   </ItemGroup>
 </Project>

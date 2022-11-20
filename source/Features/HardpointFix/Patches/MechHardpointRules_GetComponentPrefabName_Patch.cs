@@ -22,7 +22,7 @@ public static class MechHardpointRules_GetComponentPrefabName_Patch
         }
         catch (Exception e)
         {
-            Control.Logger.Error.Log(e);
+            Log.Main.Error?.Log(e);
         }
         return true;
     }
@@ -32,11 +32,11 @@ public static class MechHardpointRules_GetComponentPrefabName_Patch
     {
         try
         {
-            Control.Logger.Trace?.Log($"GetComponentPrefabName prefabName={__result} ComponentDefID={componentRef.ComponentDefID} PrefabIdentifier={componentRef.Def.PrefabIdentifier}");
+            Log.Main.Trace?.Log($"GetComponentPrefabName prefabName={__result} ComponentDefID={componentRef.ComponentDefID} PrefabIdentifier={componentRef.Def.PrefabIdentifier}");
         }
         catch (Exception e)
         {
-            Control.Logger.Error.Log(e);
+            Log.Main.Error?.Log(e);
         }
     }
 }

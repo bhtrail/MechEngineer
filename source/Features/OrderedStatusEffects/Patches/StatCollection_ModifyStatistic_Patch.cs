@@ -20,7 +20,7 @@ public static class StatCollection_ModifyStatistic_Patch
         }
         catch (Exception e)
         {
-            Control.Logger.Error.Log(e);
+            Log.Main.Error?.Log(e);
         }
     }
 }

@@ -3,7 +3,6 @@ using MechEngineer.Features.ArmorMaximizer;
 using MechEngineer.Features.ArmorStructureChanges;
 using MechEngineer.Features.ArmorStructureRatio;
 using MechEngineer.Features.AutoFix;
-using MechEngineer.Features.BetterLog;
 using MechEngineer.Features.ComponentExplosions;
 using MechEngineer.Features.CompressFloatieMessages;
 using MechEngineer.Features.CriticalEffects;
@@ -28,7 +27,6 @@ using MechEngineer.Features.OverrideTonnage;
 using MechEngineer.Features.Performance;
 using MechEngineer.Features.PlaceholderEffects;
 using MechEngineer.Features.ShutdownInjuryProtection;
-using MechEngineer.Features.TagManager;
 using MechEngineer.Features.TurretLimitedAmmo;
 using MechEngineer.Features.TurretMechComponents;
 using MechEngineer.Misc;
@@ -40,8 +38,6 @@ internal class MechEngineerSettings
 {
     public bool GeneratedSettingsFilesReadonly = true;
     public string GeneratedSettingsFilesReadonlyDescription => "If true, generated last and default settings files are set to readonly, to indicate that those are not intended to be edited.";
-
-    public BetterLogSettings BetterLog = new();
 
     public AccuracyEffectsSettings AccuracyEffects = new();
     public ArmorStructureChangesSettings ArmorStructureChanges = new();
@@ -70,7 +66,6 @@ internal class MechEngineerSettings
     public ShutdownInjuryProtectionSettings ShutdownInjuryProtection = new();
     public TurretLimitedAmmoSettings TurretLimitedAmmo = new();
     public TurretMechComponentSettings TurretMechComponents = new();
-    public TagManagerSettings TagManager = new();
 
     public PerformanceSettings Performance = new();
 
