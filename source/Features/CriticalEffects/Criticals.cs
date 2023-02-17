@@ -4,6 +4,7 @@ using System.Linq;
 using BattleTech;
 using CustomComponents;
 using FluffyUnderware.DevTools.Extensions;
+using MechEngineer.Features.CriticalEffects.Patches;
 using MechEngineer.Features.PlaceholderEffects;
 using MechEngineer.Helper;
 using UnityEngine;
@@ -136,7 +137,7 @@ internal class Criticals
     {
         if (CriticalEffectsFeature.settings.DefaultMaxCritsComponentTypes.Contains(component.componentType))
         {
-            var slots = CriticalEffectsFeature.settings.DefaultMaxCritsPerSlots * component.inventorySize;
+            var slots = CriticalEffectsFeature.settings.DefaultMaxCritsPerSlots * component.componentDef.InventorySize;
             return Mathf.FloorToInt(slots) + 1; // last effect = Destroyed
         }
         return 1;
@@ -149,7 +150,7 @@ internal class Criticals
 
     private int ComponentHitMax()
     {
-        var inventorySize = component.componentDef.Is<CriticalChance>(out var chance) ? chance.Size : component.componentDef.InventorySize;
+        var inventorySize = component.componentDef.Is<CriticalChanceCustom>(out var chance) ? chance.Size : component.componentDef.InventorySize;
         // TODO fix size correctly for location:
         // introduce fake items for overflow location that is crit linked and overwrite component hit max for original + crit linked
         var additionalSize = component.componentDef.Is<DynamicSlots.DynamicSlots>(out var slot) && slot.InnerAdjacentOnly ? slot.ReservedSlots : 0;
@@ -403,7 +404,16 @@ internal class EffectIdUtil
         var actor = component.parent;
 
         Log.Main.Debug?.Log($"Creating id={effectId} statName={effectData.statisticData.statName}");
-        actor.Combat.EffectManager.CreateEffect(effectData, effectId, -1, actor, actor, default, 0);
+
+        EffectManager_GetTargetStatCollections_Patch.SetContext(component, effectData);
+        try
+        {
+            actor.Combat.EffectManager.CreateEffect(effectData, effectId, -1, actor, actor, default, 0);
+        }
+        finally
+        {
+            EffectManager_GetTargetStatCollections_Patch.ClearContext();
+        }
     }
 
     internal void CreateCriticalEffect()
