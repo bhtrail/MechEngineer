@@ -1,6 +1,5 @@
 ﻿using System;
 using BattleTech.UI;
-using Harmony;
 
 namespace MechEngineer.Features.MechLabSlots.Patches;
 
@@ -13,29 +12,22 @@ public static class LanceMechEquipmentList_SetLoadout_Patch
 {
     [HarmonyPriority(Priority.High)]
     [HarmonyPrefix]
-    public static void Prefix(LanceMechEquipmentList __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, LanceMechEquipmentList __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            CustomWidgetsFixLanceMechEquipment.SetLoadout_LabelDefaults(__instance);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        CustomWidgetsFixLanceMechEquipment.SetLoadout_LabelDefaults(__instance);
     }
 
     [HarmonyPriority(Priority.Low)]
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(LanceMechEquipmentList __instance)
     {
-        try
-        {
-            CustomWidgetsFixLanceMechEquipment.SetLoadout_LabelOverrides(__instance);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        CustomWidgetsFixLanceMechEquipment.SetLoadout_LabelOverrides(__instance);
     }
 }

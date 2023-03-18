@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.OverrideStatTooltips.Patches;
 
@@ -8,15 +6,9 @@ namespace MechEngineer.Features.OverrideStatTooltips.Patches;
 public static class StatTooltipData_SetHeatData_Patch
 {
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(StatTooltipData __instance, MechDef def)
     {
-        try
-        {
-            OverrideStatTooltipsFeature.HeatEfficiencyStat.SetupTooltip(__instance, def);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        OverrideStatTooltipsFeature.HeatEfficiencyStat.SetupTooltip(__instance, def);
     }
 }

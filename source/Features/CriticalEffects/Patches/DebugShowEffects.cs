@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
 using BattleTech.UI;
-using Harmony;
 using MechEngineer.Misc;
 
 namespace MechEngineer.Features.CriticalEffects.Patches;
@@ -18,29 +16,22 @@ internal static class CombatHUDStatusPanel_ShowEffectStatuses_Patch
     }
 
     [HarmonyPrefix]
-    internal static void Prefix(AbstractActor actor)
+    [HarmonyWrapSafe]
+    internal static void Prefix(ref bool __runOriginal, AbstractActor actor)
     {
-        try
+        if (!__runOriginal)
         {
-            DebugUtils.LogActor("ShowEffectStatuses Prefix", actor);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        DebugUtils.LogActor("ShowEffectStatuses Prefix", actor);
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     internal static void Postfix(Dictionary<string, CombatHUDStatusIndicator> ___effectDict)
     {
-        try
-        {
-            Log.Main.Debug?.Log($"ShowEffectStatuses Postfix effectDict {___effectDict.Keys.JoinAsString()}");
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        Log.Main.Debug?.Log($"ShowEffectStatuses Postfix effectDict {___effectDict.Keys.JoinAsString()}");
     }
 }
 
@@ -54,16 +45,15 @@ internal static class EffectManager_CancelEffect_Patch
     }
 
     [HarmonyPrefix]
-    internal static void Prefix(Effect e)
+    [HarmonyWrapSafe]
+    internal static void Prefix(ref bool __runOriginal, Effect e)
     {
-        try
+        if (!__runOriginal)
         {
-            Log.Main.Debug?.Log($"CancelEffect Prefix {e.EffectData.Description.Id} + {new System.Diagnostics.StackTrace()}");
+            return;
         }
-        catch (Exception e2)
-        {
-            Log.Main.Error?.Log(e2);
-        }
+
+        Log.Main.Debug?.Log($"CancelEffect Prefix {e.EffectData.Description.Id} + {new System.Diagnostics.StackTrace()}");
     }
 }
 
@@ -77,16 +67,15 @@ internal static class EffectManager_EffectComplete_Patch
     }
 
     [HarmonyPrefix]
-    internal static void Prefix(Effect e)
+    [HarmonyWrapSafe]
+    internal static void Prefix(ref bool __runOriginal, Effect e)
     {
-        try
+        if (!__runOriginal)
         {
-            Log.Main.Debug?.Log($"EffectComplete Prefix {e.EffectData.Description.Id} + {new System.Diagnostics.StackTrace()}");
+            return;
         }
-        catch (Exception e2)
-        {
-            Log.Main.Error?.Log(e2);
-        }
+
+        Log.Main.Debug?.Log($"EffectComplete Prefix {e.EffectData.Description.Id} + {new System.Diagnostics.StackTrace()}");
     }
 }
 
@@ -114,6 +103,7 @@ internal static class CombatHUDStatusPanel_ShouldShowEffect_Patch
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     internal static void Postfix(ref bool __result)
     {
         Log.Main.Debug?.Log($"ShouldShowEffect {__result}");

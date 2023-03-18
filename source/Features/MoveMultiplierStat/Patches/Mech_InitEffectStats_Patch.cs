@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.MoveMultiplierStat.Patches;
 
@@ -8,15 +6,14 @@ namespace MechEngineer.Features.MoveMultiplierStat.Patches;
 public static class Mech_InitEffectStats_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            MoveMultiplierStatFeature.Shared.InitEffectStats(__instance);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        MoveMultiplierStatFeature.Shared.InitEffectStats(__instance);
     }
 }

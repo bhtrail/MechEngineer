@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Features.OverrideStatTooltips.Helper;
 
 namespace MechEngineer.Features.OverrideStatTooltips.Patches;
@@ -9,17 +7,15 @@ namespace MechEngineer.Features.OverrideStatTooltips.Patches;
 public static class MechStatisticsRules_CalculateChassisMovementStat_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(ref float currentValue, ref float maxValue)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, ref float currentValue, ref float maxValue)
     {
-        try
+        if (!__runOriginal)
         {
-            MechStatUtils.SetStatValues(0, ref currentValue, ref maxValue);
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        MechStatUtils.SetStatValues(0, ref currentValue, ref maxValue);
+        __runOriginal = false;
     }
 }

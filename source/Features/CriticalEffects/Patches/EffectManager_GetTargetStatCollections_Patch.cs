@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.CriticalEffects.Patches;
 
@@ -30,20 +28,18 @@ internal static class EffectManager_GetTargetStatCollections_Patch
     private static List<StatCollection>? ForcedStatCollections;
 
     [HarmonyPrefix]
-    public static bool Prefix(ref List<StatCollection> __result, EffectData effectData, ICombatant target)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, ref List<StatCollection> __result, EffectData effectData, ICombatant target)
     {
-        try
+        if (!__runOriginal)
         {
-            if (ForcedStatCollections != null)
-            {
-                __result = ForcedStatCollections;
-                return false;
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (ForcedStatCollections != null)
         {
-            Log.Main.Error?.Log(e);
+            __result = ForcedStatCollections;
+            __runOriginal = false;
         }
-        return true;
     }
 }

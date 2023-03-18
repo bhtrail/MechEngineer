@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Helper;
 using UnityEngine;
 
@@ -10,34 +8,32 @@ namespace MechEngineer.Features.ComponentExplosions.Patches;
 internal static class Mech_DamageLocation_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, 
         Mech __instance,
         WeaponHitInfo hitInfo,
         ArmorLocation aLoc,
         ref float directStructureDamage,
         ref bool __result)
     {
-        try
+        if (!__runOriginal)
         {
-            if (ComponentExplosionsFeature.IsInternalExplosionContained)
-            {
-                __result = false;
-                Log.Main.Warning?.Log("prevented explosion pass through (you should never see this message)");
-                return false;
-            }
-
-            if (ComponentExplosionsFeature.IsInternalExplosion)
-            {
-                var location = MechStructureRules.GetChassisLocationFromArmorLocation(aLoc);
-                UpdateStructureDamage(__instance, location, hitInfo, ref directStructureDamage);
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
+            return;
         }
 
-        return true;
+        if (ComponentExplosionsFeature.IsInternalExplosionContained)
+        {
+            __result = false;
+            Log.Main.Warning?.Log("prevented explosion pass through (you should never see this message)");
+            __runOriginal = false;
+            return;
+        }
+
+        if (ComponentExplosionsFeature.IsInternalExplosion)
+        {
+            var location = MechStructureRules.GetChassisLocationFromArmorLocation(aLoc);
+            UpdateStructureDamage(__instance, location, hitInfo, ref directStructureDamage);
+        }
     }
 
     internal static void UpdateStructureDamage(

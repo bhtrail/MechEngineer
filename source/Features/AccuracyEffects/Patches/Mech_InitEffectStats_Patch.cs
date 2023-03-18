@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.AccuracyEffects.Patches;
 
@@ -8,15 +6,14 @@ namespace MechEngineer.Features.AccuracyEffects.Patches;
 public static class Mech_InitEffectStats_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            AccuracyEffectsFeature.SetupAccuracyStatistics(__instance.StatCollection);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        AccuracyEffectsFeature.SetupAccuracyStatistics(__instance.StatCollection);
     }
 }

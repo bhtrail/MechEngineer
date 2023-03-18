@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.CriticalEffects.Patches;
 
@@ -7,9 +6,10 @@ namespace MechEngineer.Features.CriticalEffects.Patches;
 internal static class Mech_ApplyHeadStructureEffects_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix()
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal)
     {
         // handle effects via critical effects and DeathMethod CockpitDestroyed
-        return false;
+        __runOriginal = false;
     }
 }

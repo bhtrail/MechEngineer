@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.ArmorStructureChanges.Patches;
 
@@ -8,18 +6,17 @@ namespace MechEngineer.Features.ArmorStructureChanges.Patches;
 public static class Mech_InitStats_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            if (!__instance.Combat.IsLoadingFromSave)
-            {
-                ArmorStructureChangesFeature.Shared.InitStats(__instance);
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (!__instance.Combat.IsLoadingFromSave)
         {
-            Log.Main.Error?.Log(e);
+            ArmorStructureChangesFeature.Shared.InitStats(__instance);
         }
     }
 }

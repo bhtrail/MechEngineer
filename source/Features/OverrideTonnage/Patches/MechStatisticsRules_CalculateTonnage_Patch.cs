@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.OverrideTonnage.Patches;
 
@@ -8,32 +6,24 @@ namespace MechEngineer.Features.OverrideTonnage.Patches;
 public static class MechStatisticsRules_CalculateTonnage_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(MechDef mechDef, ref float currentValue, ref float maxValue)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechDef mechDef, ref float currentValue, ref float maxValue)
     {
-        try
+        if (!__runOriginal)
         {
-            var weights = new Weights(mechDef);
-            maxValue = weights.StandardChassisWeightCapacity;
-            currentValue = weights.TotalWeight;
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        var weights = new Weights(mechDef);
+        maxValue = weights.StandardChassisWeightCapacity;
+        currentValue = weights.TotalWeight;
+        __runOriginal = false;
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(ref float currentValue)
     {
-        try
-        {
-            currentValue = PrecisionUtils.RoundUp(currentValue, OverrideTonnageFeature.settings.TonnageStandardPrecision);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        currentValue = PrecisionUtils.RoundUp(currentValue, OverrideTonnageFeature.settings.TonnageStandardPrecision);
     }
 }

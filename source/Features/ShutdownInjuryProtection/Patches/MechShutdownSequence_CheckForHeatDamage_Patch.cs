@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Misc;
 
 namespace MechEngineer.Features.ShutdownInjuryProtection.Patches;
@@ -15,29 +13,26 @@ public static class MechShutdownSequence_CheckForHeatDamage_Patch
     }
 
     [HarmonyPrefix]
-    public static bool Prefix(MechShutdownSequence __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechShutdownSequence __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            var mech = __instance.OwningMech;
-            var receiveShutdownInjury = __instance.Combat.Constants.Heat.ShutdownCausesInjury
-                                        || mech.StatCollection.ReceiveShutdownInjury().Get();
-
-            if (receiveShutdownInjury && mech.IsOverheated)
-            {
-                var sourceID = __instance.instigatorGUID;
-                var stackItemUID = __instance.RootSequenceGUID;
-
-                ShutdownInjuryProtectionFeature.SetInjury(mech, sourceID, stackItemUID);
-            }
-
-            return false;
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
+            return;
         }
 
-        return true;
+        var mech = __instance.OwningMech;
+        var receiveShutdownInjury = __instance.Combat.Constants.Heat.ShutdownCausesInjury
+                                    || mech.StatCollection.ReceiveShutdownInjury().Get();
+
+        if (receiveShutdownInjury && mech.IsOverheated)
+        {
+            var sourceID = __instance.instigatorGUID;
+            var stackItemUID = __instance.RootSequenceGUID;
+
+            ShutdownInjuryProtectionFeature.SetInjury(mech, sourceID, stackItemUID);
+        }
+
+        __runOriginal = false;
     }
 }

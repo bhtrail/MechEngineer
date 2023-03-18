@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.OverrideGhostVFX.Patches;
 
@@ -9,21 +7,18 @@ namespace MechEngineer.Features.OverrideGhostVFX.Patches;
 public static class GameRepresentation_PlayVFXAt_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(string vfxName)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, string vfxName)
     {
-        try
+        if (!__runOriginal)
         {
-            if (Control.Settings.OverrideGhostVFX.Blacklisted.Contains(vfxName))
-            {
-                Log.Main.Debug?.Log($"skipped {vfxName}");
-                return false;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
+            return;
         }
 
-        return true;
+        if (Control.Settings.OverrideGhostVFX.Blacklisted.Contains(vfxName))
+        {
+            Log.Main.Debug?.Log($"skipped {vfxName}");
+            __runOriginal = false;
+        }
     }
 }

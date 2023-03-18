@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.Performance.Patches;
 
@@ -8,6 +7,7 @@ namespace MechEngineer.Features.Performance.Patches;
 public static class ActorMovementSequence_CompleteMove_Patch
 {
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(ActorMovementSequence __instance)
     {
         AuraCache.RefreshECMStates(__instance.Combat.AllActors, EffectTriggerType.Passive);

@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.AccuracyEffects.Patches;
 
@@ -8,25 +6,22 @@ namespace MechEngineer.Features.AccuracyEffects.Patches;
 public static class ToHit_GetSelfArmMountedModifier_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(Weapon weapon, ref float __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Weapon weapon, ref float __result)
     {
-        try
+        if (!__runOriginal)
         {
-            if (weapon.parent is Mech mech)
-            {
-                __result += AccuracyEffectsFeature.AccuracyForLocation(
-                    mech.StatCollection,
-                    weapon.mechComponentRef.MountedLocation
-                );
-
-                return false;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
+            return;
         }
 
-        return true;
+        if (weapon.parent is Mech mech)
+        {
+            __result += AccuracyEffectsFeature.AccuracyForLocation(
+                mech.StatCollection,
+                weapon.mechComponentRef.MountedLocation
+            );
+
+            __runOriginal = false;
+        }
     }
 }

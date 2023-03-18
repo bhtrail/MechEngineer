@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Features.Engines.StaticHandler;
 
 namespace MechEngineer.Features.Engines.Patches;
@@ -9,17 +7,15 @@ namespace MechEngineer.Features.Engines.Patches;
 public static class Mech_CalcJumpHeat_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(Mech __instance, float distJumped, ref int __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance, float distJumped, ref int __result)
     {
-        try
+        if (!__runOriginal)
         {
-            __result = Jumping.CalcJumpHeat(__instance, distJumped);
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        __result = Jumping.CalcJumpHeat(__instance, distJumped);
+        __runOriginal = false;
     }
 }

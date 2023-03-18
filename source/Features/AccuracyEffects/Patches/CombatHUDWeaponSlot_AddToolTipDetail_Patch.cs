@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech.UI;
-using Harmony;
+﻿using BattleTech.UI;
 
 namespace MechEngineer.Features.AccuracyEffects.Patches;
 
@@ -8,18 +6,17 @@ namespace MechEngineer.Features.AccuracyEffects.Patches;
 public static class CombatHUDWeaponSlot_AddToolTipDetail_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(ref string description)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, ref string description)
     {
-        try
+        if (!__runOriginal)
         {
-            if (description == "ARM MOUNTED")
-            {
-                description = AccuracyEffectsFeature.Shared.Settings.CombatHUDTooltipName;
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (description == "ARM MOUNTED")
         {
-            Log.Main.Error?.Log(e);
+            description = AccuracyEffectsFeature.Shared.Settings.CombatHUDTooltipName;
         }
     }
 }

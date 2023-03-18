@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using BattleTech;
-using Harmony;
 using MechEngineer.Features.HardpointFix.Public;
 using MechEngineer.Misc;
 
@@ -13,25 +11,25 @@ public static class Mech_InitGameRep_Patch
     [HarmonyBefore(Mods.AC, Mods.CU)]
     [HarmonyPriority(Priority.High)]
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            var componentRefs = __instance.Weapons.Union(__instance.supportComponents)
-                .Select(w => w.baseComponentRef as MechComponentRef)
-                .Where(c => c != null)
-                .Select(c => c!)
-                .ToList();
+            return;
+        }
 
-            CalculatorSetup.Setup(__instance.MechDef.Chassis, componentRefs);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        var componentRefs = __instance.Weapons.Union(__instance.supportComponents)
+            .Select(w => w.baseComponentRef as MechComponentRef)
+            .Where(c => c != null)
+            .Select(c => c!)
+            .ToList();
+
+        CalculatorSetup.Setup(__instance.MechDef.Chassis, componentRefs);
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix()
     {
         CalculatorSetup.Reset();

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BattleTech;
-using Harmony;
 using MechEngineer.Features.DamageIgnore;
 
 namespace MechEngineer.Features.CriticalEffects.Patches;
@@ -28,29 +26,22 @@ public static class MechComponent_DamageComponent_Patch
 
     [HarmonyAfter(DamageIgnoreFeature.Namespace)]
     [HarmonyPrefix]
-    public static void Prefix(MechComponent __instance, WeaponHitInfo hitInfo, ref ComponentDamageLevel damageLevel)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechComponent __instance, WeaponHitInfo hitInfo, ref ComponentDamageLevel damageLevel)
     {
-        try
+        if (!__runOriginal)
         {
-            var mechComponent = __instance;
-            mechComponent.Criticals().Hit(hitInfo, ref damageLevel);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        var mechComponent = __instance;
+        mechComponent.Criticals().Hit(hitInfo, ref damageLevel);
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(MechComponent __instance)
     {
-        try
-        {
-            MessagesHandler.PublishComponentState(__instance);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        MessagesHandler.PublishComponentState(__instance);
     }
 }

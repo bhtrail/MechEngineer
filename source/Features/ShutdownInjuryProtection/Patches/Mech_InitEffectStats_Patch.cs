@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Helper;
 
 namespace MechEngineer.Features.ShutdownInjuryProtection.Patches;
@@ -9,26 +7,25 @@ namespace MechEngineer.Features.ShutdownInjuryProtection.Patches;
 public static class Mech_InitEffectStats_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            if (ShutdownInjuryProtectionFeature.settings.ShutdownInjuryEnabled)
-            {
-                __instance.StatCollection.ReceiveShutdownInjury().Create();
-            }
-            if (ShutdownInjuryProtectionFeature.settings.HeatDamageInjuryEnabled)
-            {
-                __instance.StatCollection.ReceiveHeatDamageInjury().Create();
-            }
-            if (ShutdownInjuryProtectionFeature.settings.OverheatedOnActivationEndInjuryEnabled)
-            {
-                __instance.StatCollection.ReceiveOverheatedOnActivationEndInjury().Create();
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (ShutdownInjuryProtectionFeature.settings.ShutdownInjuryEnabled)
         {
-            Log.Main.Error?.Log(e);
+            __instance.StatCollection.ReceiveShutdownInjury().Create();
+        }
+        if (ShutdownInjuryProtectionFeature.settings.HeatDamageInjuryEnabled)
+        {
+            __instance.StatCollection.ReceiveHeatDamageInjury().Create();
+        }
+        if (ShutdownInjuryProtectionFeature.settings.OverheatedOnActivationEndInjuryEnabled)
+        {
+            __instance.StatCollection.ReceiveOverheatedOnActivationEndInjury().Create();
         }
     }
 }

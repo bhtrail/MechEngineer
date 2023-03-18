@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.Performance.Patches;
 
@@ -9,17 +7,15 @@ namespace MechEngineer.Features.Performance.Patches;
 public static class AbstractActor_StealthPipsPreviewFromActorMovement_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(AbstractActor __instance, ref int __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, AbstractActor __instance, ref int __result)
     {
-        try
+        if (!__runOriginal)
         {
-            __result = 0;
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        __result = 0;
+        __runOriginal = false;
     }
 }

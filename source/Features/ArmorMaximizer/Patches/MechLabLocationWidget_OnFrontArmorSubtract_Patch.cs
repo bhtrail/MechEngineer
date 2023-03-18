@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech.UI;
-using Harmony;
+﻿using BattleTech.UI;
 
 namespace MechEngineer.Features.ArmorMaximizer.Patches;
 
@@ -8,17 +6,15 @@ namespace MechEngineer.Features.ArmorMaximizer.Patches;
 public static class MechLabLocationWidget_OnFrontArmorSubtract_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(MechLabLocationWidget __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechLabLocationWidget __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            ArmorMaximizerHandler.OnArmorAddOrSubtract(__instance, false, -1f);
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        ArmorMaximizerHandler.OnArmorAddOrSubtract(__instance, false, -1f);
+        __runOriginal = false;
     }
 }

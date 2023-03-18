@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.DamageIgnore.Patches;
 
@@ -9,21 +7,18 @@ namespace MechEngineer.Features.DamageIgnore.Patches;
 public static class MechComponent_inventorySize_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(MechComponent __instance, ref int __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechComponent __instance, ref int __result)
     {
-        try
+        if (!__runOriginal)
         {
-            if (__instance.componentDef?.IsIgnoreDamage() ?? false)
-            {
-                __result = 0;
-                return false;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
+            return;
         }
 
-        return true;
+        if (__instance.componentDef?.IsIgnoreDamage() ?? false)
+        {
+            __result = 0;
+            __runOriginal = false;
+        }
     }
 }

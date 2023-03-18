@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 
 namespace MechEngineer.Features.MoveMultiplierStat.Patches;
 
@@ -8,15 +6,9 @@ namespace MechEngineer.Features.MoveMultiplierStat.Patches;
 internal static class Mech_MoveMultiplier_Patch
 {
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(Mech __instance, ref float __result)
     {
-        try
-        {
-            MoveMultiplierStatFeature.Shared.MoveMultiplier(__instance, ref __result);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        MoveMultiplierStatFeature.Shared.MoveMultiplier(__instance, ref __result);
     }
 }

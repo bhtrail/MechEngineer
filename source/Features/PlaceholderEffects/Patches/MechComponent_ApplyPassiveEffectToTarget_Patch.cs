@@ -1,6 +1,4 @@
-using System;
 using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.PlaceholderEffects.Patches;
 
@@ -8,15 +6,14 @@ namespace MechEngineer.Features.PlaceholderEffects.Patches;
 public static class MechComponent_ApplyPassiveEffectToTarget_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(MechComponent __instance, ref EffectData effect)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechComponent __instance, ref EffectData effect)
     {
-        try
+        if (!__runOriginal)
         {
-            PlaceholderEffectsFeature.ProcessLocationalEffectData(ref effect, __instance);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        PlaceholderEffectsFeature.ProcessLocationalEffectData(ref effect, __instance);
     }
 }

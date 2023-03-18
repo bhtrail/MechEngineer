@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Features.HardpointFix.Public;
 
 namespace MechEngineer.Features.HardpointFix.Patches;
@@ -10,33 +8,25 @@ public static class MechHardpointRules_GetComponentPrefabName_Patch
 {
     [HarmonyPriority(Priority.High)]
     [HarmonyPrefix]
-    public static bool Prefix(BaseComponentRef componentRef, ref string? __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, BaseComponentRef componentRef, ref string? __result)
     {
-        try
+        if (!__runOriginal)
         {
-            if (CalculatorSetup.SharedCalculator != null)
-            {
-                __result = CalculatorSetup.SharedCalculator.GetPrefabName(componentRef);
-                return false;
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (CalculatorSetup.SharedCalculator != null)
         {
-            Log.Main.Error?.Log(e);
+            __result = CalculatorSetup.SharedCalculator.GetPrefabName(componentRef);
+            __runOriginal = false;
         }
-        return true;
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(BaseComponentRef componentRef, ref string __result)
     {
-        try
-        {
-            Log.Main.Trace?.Log($"GetComponentPrefabName prefabName={__result} ComponentDefID={componentRef.ComponentDefID} PrefabIdentifier={componentRef.Def.PrefabIdentifier}");
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        Log.Main.Trace?.Log($"GetComponentPrefabName prefabName={__result} ComponentDefID={componentRef.ComponentDefID} PrefabIdentifier={componentRef.Def.PrefabIdentifier}");
     }
 }

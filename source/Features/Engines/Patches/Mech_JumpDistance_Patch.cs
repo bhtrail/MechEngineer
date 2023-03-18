@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Features.Engines.StaticHandler;
 
 namespace MechEngineer.Features.Engines.Patches;
@@ -9,17 +7,15 @@ namespace MechEngineer.Features.Engines.Patches;
 public static class Mech_JumpDistance_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(Mech __instance, ref float __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance, ref float __result)
     {
-        try
+        if (!__runOriginal)
         {
-            __result = Jumping.CalcMaxJumpDistance(__instance);
-            return false;
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
-        return true;
+
+        __result = Jumping.CalcMaxJumpDistance(__instance);
+        __runOriginal = false;
     }
 }

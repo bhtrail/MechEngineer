@@ -1,5 +1,4 @@
 ﻿using BattleTech;
-using Harmony;
 
 namespace MechEngineer.Features.ComponentExplosions.Patches;
 
@@ -7,13 +6,18 @@ namespace MechEngineer.Features.ComponentExplosions.Patches;
 internal static class MechStructureRules_GetPassthroughLocation_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(ArmorLocation location, ref ArmorLocation __result)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, ArmorLocation location, ref ArmorLocation __result)
     {
+        if (!__runOriginal)
+        {
+            return;
+        }
+
         if (location == ArmorLocation.Head)
         {
             __result = ArmorLocation.CenterTorso;
-            return false;
+            __runOriginal = false;
         }
-        return true;
     }
 }

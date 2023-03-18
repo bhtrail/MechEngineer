@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using Localize;
 using MechEngineer.Misc;
 
@@ -10,37 +8,36 @@ namespace MechEngineer.Features.CriticalEffects.Patches;
 internal static class AbstractActor_FlagForDeath_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, 
         AbstractActor __instance,
         DeathMethod deathMethod,
         DamageType damageType,
         int stackItemID,
         string attackerID)
     {
-        try
+        if (!__runOriginal)
         {
-            var actor = __instance;
-            if (actor._flaggedForDeath)
-            {
-                return;
-            }
-            var pilot = actor.GetPilot();
-            if (pilot == null || pilot.IsIncapacitated)
-            {
-                return;
-            }
-            // check for any pilot kill leftovers (the pilot was flagged but not yet incapacitated)
-            if (deathMethod is not (DeathMethod.CockpitDestroyed or DeathMethod.HeadDestruction or DeathMethod.PilotKilled))
-            {
-                return;
-            }
-            // essentially copied from Mech.ApplyHeadStructureEffects
-            pilot.LethalInjurePilot(actor.Combat.Constants, attackerID, stackItemID, true, damageType, null, actor.Combat.FindActorByGUID(attackerID));
-            actor.GetPilot()?.ShowInjuryMessage(Strings.T("PILOT: LETHAL DAMAGE!"));
+            return;
         }
-        catch (Exception e)
+
+        var actor = __instance;
+        if (actor._flaggedForDeath)
         {
-            Log.Main.Error?.Log(e);
+            return;
         }
+        var pilot = actor.GetPilot();
+        if (pilot == null || pilot.IsIncapacitated)
+        {
+            return;
+        }
+        // check for any pilot kill leftovers (the pilot was flagged but not yet incapacitated)
+        if (deathMethod is not (DeathMethod.CockpitDestroyed or DeathMethod.HeadDestruction or DeathMethod.PilotKilled))
+        {
+            return;
+        }
+        // essentially copied from Mech.ApplyHeadStructureEffects
+        pilot.LethalInjurePilot(actor.Combat.Constants, attackerID, stackItemID, true, damageType, null, actor.Combat.FindActorByGUID(attackerID));
+        actor.GetPilot()?.ShowInjuryMessage(Strings.T("PILOT: LETHAL DAMAGE!"));
     }
 }

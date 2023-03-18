@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using BattleTech.UI;
-using Harmony;
 
 namespace MechEngineer.Features.ArmorMaximizer.Patches;
 
@@ -9,20 +7,18 @@ namespace MechEngineer.Features.ArmorMaximizer.Patches;
 public static class MechLabPanel_OnStripArmor_Patch
 {
     [HarmonyPrefix]
-    public static bool Prefix(MechLabPanel __instance, MechLabMechInfoWidget ___mechInfoWidget, MechLabItemSlotElement ___dragItem)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechLabPanel __instance, MechLabMechInfoWidget ___mechInfoWidget, MechLabItemSlotElement ___dragItem)
     {
-        try
+        if (!__runOriginal)
         {
-            if (__instance.Initialized && ___dragItem == null && !LocationExtensions.ChassisLocationList.Any(location => __instance.GetLocationWidget(location).IsDestroyed))
-            {
-                ArmorMaximizerHandler.OnStripArmor(__instance);
-                return false;
-            }
+            return;
         }
-        catch (Exception e)
+
+        if (__instance.Initialized && ___dragItem == null && !LocationExtensions.ChassisLocationList.Any(location => __instance.GetLocationWidget(location).IsDestroyed))
         {
-            Log.Main.Error?.Log(e);
+            ArmorMaximizerHandler.OnStripArmor(__instance);
+            __runOriginal = false;
         }
-        return true;
     }
 }

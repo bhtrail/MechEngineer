@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech;
-using Harmony;
+﻿using BattleTech;
 using MechEngineer.Features.Engines.StaticHandler;
 
 namespace MechEngineer.Features.Engines.Patches;
@@ -9,28 +7,21 @@ namespace MechEngineer.Features.Engines.Patches;
 public static class Mech_InitEffectStats_Patch
 {
     [HarmonyPrefix]
-    public static void Prefix(Mech __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, Mech __instance)
     {
-        try
+        if (!__runOriginal)
         {
-            Jumping.InitEffectStats(__instance);
+            return;
         }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+
+        Jumping.InitEffectStats(__instance);
     }
 
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(Mech __instance)
     {
-        try
-        {
-            EngineMisc.OverrideInitEffectStats(__instance);
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        EngineMisc.OverrideInitEffectStats(__instance);
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using BattleTech.UI;
-using Harmony;
+﻿using BattleTech.UI;
 
 namespace MechEngineer.Features.Globals.Patches;
 
@@ -8,15 +6,9 @@ namespace MechEngineer.Features.Globals.Patches;
 public static class MechLabPanel_ExitMechLab_Patch
 {
     [HarmonyPostfix]
+    [HarmonyWrapSafe]
     public static void Postfix(MechLabPanel __instance)
     {
-        try
-        {
-            Global.ActiveMechLabPanel = null;
-        }
-        catch (Exception e)
-        {
-            Log.Main.Error?.Log(e);
-        }
+        Global.ActiveMechLabPanel = null;
     }
 }

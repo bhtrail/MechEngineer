@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using BattleTech;
 using BattleTech.UI;
-using Harmony;
 using Localize;
 
 namespace MechEngineer.Features.InvalidInventory.Patches;
@@ -13,8 +12,14 @@ public static class MechLabPanel_GetCantSaveErrorString_Patch
     private static bool _isSimGame;
 
     [HarmonyPrefix]
-    public static void Prefix(MechLabPanel __instance)
+    [HarmonyWrapSafe]
+    public static void Prefix(ref bool __runOriginal, MechLabPanel __instance)
     {
+        if (!__runOriginal)
+        {
+            return;
+        }
+
         _isSimGame = __instance.IsSimGame;
     }
 
