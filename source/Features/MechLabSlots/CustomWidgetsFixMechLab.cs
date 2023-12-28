@@ -39,13 +39,11 @@ public class CustomWidgetsFixMechLab
         );
     }
 
-    internal static void SetupWidget(
-        string id,
+    internal static void SetupWidget(string id,
         ref MechLabLocationWidget? topWidget,
         MechLabPanel mechLabPanel,
         MechLabLocationWidget armWidget,
-        MechLabSlotsSettings.WidgetSettings settings
-        )
+        MechLabSlotsSettings.WidgetSettings settings)
     {
         GameObject go;
         if (topWidget == null)
@@ -71,6 +69,7 @@ public class CustomWidgetsFixMechLab
         else
         {
             go = topWidget.gameObject;
+            go.SetActive(settings.Enabled);
         }
 
         var parent = armWidget.transform.parent;
@@ -90,8 +89,10 @@ public class CustomWidgetsFixMechLab
 
         topWidget.Init(mechLabPanel);
 
+        // allow modify layout to go to 0 and
         var layout = new WidgetLayout(topWidget);
         MechLabSlotsFixer.ModifyLayoutSlotCount(layout, settings.Slots);
+
         {
             var mechRectTransform = parent.parent.GetComponent<RectTransform>();
             LayoutRebuilder.ForceRebuildLayoutImmediate(mechRectTransform);
@@ -192,5 +193,31 @@ public class CustomWidgetsFixMechLab
         nwidget.ShowHighlightFrame(true, isOriginalLocation ? UIColor.Blue : UIColor.Gold);
         cRef = null;
         return false;
+    }
+
+    internal static void ShowOrHideCustomWidgets(MechLabLocationWidget widget)
+    {
+        if (TopLeftWidget == null || TopRightWidget == null)
+        {
+            Log.Main.Warning?.Log("Top widgets not initialized even though they should be");
+            return;
+        }
+
+        if (widget.loadout.Location != ChassisLocations.CenterTorso)
+        {
+            return;
+        }
+
+        var custom = widget.mechLab.activeMechDef.Chassis.GetComponent<CustomWidgetChassisCustom>();
+        static void ShowOrHideCustomWidget(
+            MechLabLocationWidget customWidget,
+            bool? enabled,
+            MechLabSlotsSettings.WidgetSettings settings
+        )
+        {
+            customWidget.gameObject.SetActive(enabled ?? settings.Enabled);
+        }
+        ShowOrHideCustomWidget(TopLeftWidget, custom?.TopLeftWidgetEnabled, MechLabSlotsFeature.settings.TopLeftWidget);
+        ShowOrHideCustomWidget(TopRightWidget, custom?.TopRightWidgetEnabled, MechLabSlotsFeature.settings.TopRightWidget);
     }
 }

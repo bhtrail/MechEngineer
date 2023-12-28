@@ -35,13 +35,6 @@ public static class MechComponent_DamageComponent_Patch
         }
 
         var mechComponent = __instance;
-        mechComponent.Criticals().Hit(hitInfo, ref damageLevel);
-    }
-
-    [HarmonyPostfix]
-    [HarmonyWrapSafe]
-    public static void Postfix(MechComponent __instance)
-    {
-        MessagesHandler.PublishComponentState(__instance);
+        mechComponent.CriticalEffects().Hit(hitInfo, out damageLevel);
     }
 }
